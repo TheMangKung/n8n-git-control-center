@@ -1,0 +1,47 @@
+{
+  "name": "n8n-git-control-center",
+  "version": "1.0.0",
+  "description": "Git DAG Visualizer and Time Machine (Desktop App)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.n8n.gitcontrolcenter",
+    "productName": "n8n Git Control Center",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "generate_dag.py",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    }
+  },
+  "keywords": [
+    "git",
+    "n8n",
+    "dag",
+    "desktop",
+    "time-machine"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^44.5.1"
+  }
+}

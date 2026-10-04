@@ -1,0 +1,447 @@
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { execFile } = require('child_process');
+
+let mainWindow = null;
+let activeWatcher = null;
+let watcherDebounceTimer = null;
+
+function getConfigPath() {
+  return path.join(app.getPath('userData'), 'n8n_git_projects.json');
+}
+const GENERATE_SCRIPT = path.join(__dirname, 'generate_dag.py');
+const GIT_DATA_JS = path.join(__dirname, 'git_data.js');
+
+// -------------------------------------------------------------
+// Helper: Config Persistence
+// -------------------------------------------------------------
+function loadConfig() {
+  const configFile = getConfigPath();
+  try {
+    if (fs.existsSync(configFile)) {
+      const raw = fs.readFileSync(configFile, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Failed to load config:', e);
+  }
+
+  // Initial default: try to detect current or parent git repo
+  let defaultPath = __dirname;
+  const parent1 = path.resolve(__dirname, '..');
+  const parent2 = path.resolve(__dirname, '..', '..');
+  if (fs.existsSync(path.join(defaultPath, '.git'))) {
+    // current dir is repo
+  } else if (fs.existsSync(path.join(parent1, '.git'))) {
+    defaultPath = parent1;
+  } else if (fs.existsSync(path.join(parent2, '.git'))) {
+    defaultPath = parent2;
+  }
+
+  const initial = {
+    projects: fs.existsSync(path.join(defaultPath, '.git'))
+      ? [{ id: 'proj-default', name: path.basename(defaultPath), path: defaultPath, lastOpened: Date.now() }]
+      : [],
+    activePath: fs.existsSync(path.join(defaultPath, '.git')) ? defaultPath : ''
+  };
+  saveConfig(initial);
+  return initial;
+}
+
+function saveConfig(cfg) {
+  const configFile = getConfigPath();
+  try {
+    fs.mkdirSync(path.dirname(configFile), { recursive: true });
+    fs.writeFileSync(configFile, JSON.stringify(cfg, null, 2), 'utf-8');
+  } catch (e) {
+    console.error('Failed to save config:', e);
+  }
+}
+
+// -------------------------------------------------------------
+// Helper: Git CLI Runner
+// -------------------------------------------------------------
+function runGit(args, cwd) {
+  return new Promise((resolve) => {
+    if (!cwd || !fs.existsSync(cwd)) {
+      return resolve({ ok: false, error: 'Directory does not exist' });
+    }
+    execFile(
+      'git',
+      ['-c', 'core.quotepath=false', ...args],
+      { cwd, maxBuffer: 15 * 1024 * 1024, encoding: 'utf8', windowsHide: true },
+      (error, stdout, stderr) => {
+        if (error) {
+          resolve({ ok: false, error: (stderr || error.message).trim(), stdout: (stdout || '').trim() });
+        } else {
+          resolve({ ok: true, stdout: (stdout || '').trim(), stderr: (stderr || '').trim() });
+        }
+      }
+    );
+  });
+}
+
+// -------------------------------------------------------------
+// Helper: Run Python DAG Generator & Parse Result
+// -------------------------------------------------------------
+function runGenerateDag(repoPath) {
+  return new Promise((resolve) => {
+    if (!repoPath || !fs.existsSync(repoPath)) {
+      return resolve({ ok: false, error: 'Repo path not found' });
+    }
+
+    execFile(
+      'python',
+      [GENERATE_SCRIPT, repoPath],
+      { cwd: __dirname, maxBuffer: 20 * 1024 * 1024, encoding: 'utf8', windowsHide: true },
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error('Generate DAG error:', stderr || error.message);
+          return resolve({ ok: false, error: stderr || error.message });
+        }
+
+        try {
+          if (fs.existsSync(GIT_DATA_JS)) {
+            const content = fs.readFileSync(GIT_DATA_JS, 'utf-8');
+            const match = content.match(/window\.GIT_DAG_DATA\s*=\s*(\{[\s\S]*\});?\s*$/);
+            if (match && match[1]) {
+              const parsed = JSON.parse(match[1]);
+              return resolve({ ok: true, data: parsed });
+            }
+          }
+          resolve({ ok: false, error: 'Could not parse git_data.js' });
+        } catch (parseErr) {
+          resolve({ ok: false, error: parseErr.message });
+        }
+      }
+    );
+  });
+}
+
+// -------------------------------------------------------------
+// Helper: File Watcher for Real-time DAG Updates
+// -------------------------------------------------------------
+function watchRepo(repoPath) {
+  if (activeWatcher) {
+    try { activeWatcher.close(); } catch (e) {}
+    activeWatcher = null;
+  }
+
+  if (!repoPath || !fs.existsSync(repoPath)) return;
+
+  try {
+    // Watch repo directory recursively
+    activeWatcher = fs.watch(repoPath, { recursive: true }, (eventType, filename) => {
+      if (!filename) return;
+      // Ignore git internal pack files or node_modules churn
+      if (
+        filename.includes('node_modules') ||
+        filename.includes('.git\\objects') ||
+        filename.includes('.git/objects') ||
+        filename.includes('git_data.js') ||
+        filename.endsWith('.tmp')
+      ) {
+        return;
+      }
+
+      if (watcherDebounceTimer) clearTimeout(watcherDebounceTimer);
+      watcherDebounceTimer = setTimeout(async () => {
+        const res = await runGenerateDag(repoPath);
+        if (res.ok && mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('dag:updated', res.data);
+        }
+      }, 1000);
+    });
+  } catch (err) {
+    console.warn('Watch repo failed:', err.message);
+  }
+}
+
+// -------------------------------------------------------------
+// Electron Window Creation
+// -------------------------------------------------------------
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1440,
+    height: 900,
+    minWidth: 1024,
+    minHeight: 700,
+    title: 'n8n Git Control Center',
+    backgroundColor: '#121419',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  mainWindow.loadFile('index.html');
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  const cfg = loadConfig();
+  if (cfg.activePath) {
+    watchRepo(cfg.activePath);
+  }
+}
+
+app.whenReady().then(() => {
+  createWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+// -------------------------------------------------------------
+// IPC Handlers: Projects Management
+// -------------------------------------------------------------
+ipcMain.handle('projects:get', () => {
+  return loadConfig();
+});
+
+ipcMain.handle('projects:add', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'เลือกโฟลเดอร์ Git Repository',
+    properties: ['openDirectory']
+  });
+
+  if (result.canceled || !result.filePaths.length) {
+    return { canceled: true };
+  }
+
+  const selectedPath = result.filePaths[0];
+  const gitDir = path.join(selectedPath, '.git');
+  if (!fs.existsSync(gitDir)) {
+    return { ok: false, error: 'โฟลเดอร์นี้ไม่ใช่ Git Repository (ไม่พบโฟลเดอร์ .git)' };
+  }
+
+  const cfg = loadConfig();
+  const existing = cfg.projects.find((p) => p.path === selectedPath);
+  if (!existing) {
+    cfg.projects.push({
+      id: 'proj-' + Date.now(),
+      name: path.basename(selectedPath),
+      path: selectedPath,
+      lastOpened: Date.now()
+    });
+  }
+  cfg.activePath = selectedPath;
+  saveConfig(cfg);
+
+  watchRepo(selectedPath);
+  const dagRes = await runGenerateDag(selectedPath);
+
+  return { ok: true, activePath: selectedPath, projects: cfg.projects, dagData: dagRes.data };
+});
+
+ipcMain.handle('projects:switch', async (_event, targetPath) => {
+  const cfg = loadConfig();
+  if (!fs.existsSync(targetPath)) {
+    return { ok: false, error: 'ไม่พบโฟลเดอร์โปรเจกต์นี้ในเครื่อง' };
+  }
+
+  cfg.activePath = targetPath;
+  const p = cfg.projects.find((x) => x.path === targetPath);
+  if (p) p.lastOpened = Date.now();
+  saveConfig(cfg);
+
+  watchRepo(targetPath);
+  const dagRes = await runGenerateDag(targetPath);
+
+  return { ok: true, activePath: targetPath, projects: cfg.projects, dagData: dagRes.data };
+});
+
+ipcMain.handle('projects:remove', async (_event, targetPath) => {
+  const cfg = loadConfig();
+  cfg.projects = cfg.projects.filter((p) => p.path !== targetPath);
+  if (cfg.activePath === targetPath) {
+    cfg.activePath = cfg.projects.length ? cfg.projects[0].path : '';
+  }
+  saveConfig(cfg);
+
+  if (cfg.activePath) {
+    watchRepo(cfg.activePath);
+    const dagRes = await runGenerateDag(cfg.activePath);
+    return { ok: true, activePath: cfg.activePath, projects: cfg.projects, dagData: dagRes.data };
+  }
+  return { ok: true, activePath: '', projects: cfg.projects, dagData: null };
+});
+
+// -------------------------------------------------------------
+// IPC Handlers: Git Actions
+// -------------------------------------------------------------
+ipcMain.handle('git:getRemoteInfo', async () => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) {
+    return { ok: false, error: 'No active repository' };
+  }
+
+  const branchRes = await runGit(['branch', '--show-current'], repo);
+  const branch = branchRes.ok ? branchRes.stdout : 'DETACHED';
+
+  const remoteRes = await runGit(['remote', 'get-url', 'origin'], repo);
+  const remoteUrl = remoteRes.ok ? remoteRes.stdout : '';
+
+  const statusRes = await runGit(['status', '--porcelain'], repo);
+  const dirtyLines = statusRes.ok ? statusRes.stdout.split('\n').filter(Boolean) : [];
+
+  return {
+    ok: true,
+    repoName: path.basename(repo),
+    repoPath: repo,
+    branch,
+    remoteUrl,
+    hasRemote: Boolean(remoteUrl),
+    isDirty: dirtyLines.length > 0,
+    dirtyCount: dirtyLines.length
+  };
+});
+
+ipcMain.handle('git:refreshDag', async () => {
+  const cfg = loadConfig();
+  if (!cfg.activePath) return { ok: false, error: 'No active repo' };
+  const res = await runGenerateDag(cfg.activePath);
+  return res;
+});
+
+ipcMain.handle('git:saveCheckpoint', async (_event, userMessage) => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) {
+    return { ok: false, error: 'No active repository selected' };
+  }
+
+  // 1. Stage all files
+  const addRes = await runGit(['add', '-A'], repo);
+  if (!addRes.ok) {
+    return { ok: false, error: `Git Add failed: ${addRes.error}` };
+  }
+
+  // 2. Check if anything changed
+  const diffCached = await runGit(['diff', '--cached', '--name-only'], repo);
+  if (!diffCached.stdout) {
+    return { ok: false, message: 'ไม่มีไฟล์ที่มีการเปลี่ยนแปลง (Working Tree สะอาดอยู่แล้ว)' };
+  }
+
+  // 3. Commit with timestamp & note
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timeStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const note = userMessage && userMessage.trim() ? userMessage.trim() : 'Savepoint';
+  const commitMsg = `Checkpoint: ${timeStr} - ${note}`;
+
+  const commitRes = await runGit(['commit', '-m', commitMsg], repo);
+  if (!commitRes.ok) {
+    return { ok: false, error: `Git Commit failed: ${commitRes.error}` };
+  }
+
+  // 4. Try to push to remote origin
+  const branchRes = await runGit(['branch', '--show-current'], repo);
+  const branch = branchRes.stdout || 'main';
+
+  const remoteRes = await runGit(['remote'], repo);
+  let pushInfo = '';
+  if (remoteRes.stdout.includes('origin')) {
+    const pushRes = await runGit(['push', 'origin', branch], repo);
+    if (!pushRes.ok) {
+      pushInfo = ` (เซฟในเครื่องสำเร็จ แต่ Push ไม่ผ่าน: ${pushRes.error})`;
+    } else {
+      pushInfo = ' และ Push ขึ้น GitHub เรียบร้อยแล้ว! 🚀';
+    }
+  } else {
+    pushInfo = ' (บันทึกในเครื่องเรียบร้อย - ยังไม่ได้ต่อ Remote GitHub)';
+  }
+
+  // 5. Refresh DAG
+  const dagRes = await runGenerateDag(repo);
+  if (dagRes.ok && mainWindow) {
+    mainWindow.webContents.send('dag:updated', dagRes.data);
+  }
+
+  return {
+    ok: true,
+    message: `บันทึก Checkpoint สำเร็จ${pushInfo}`,
+    dagData: dagRes.data
+  };
+});
+
+ipcMain.handle('git:syncOverwrite', async () => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) {
+    return { ok: false, error: 'No active repository selected' };
+  }
+
+  const remoteRes = await runGit(['remote'], repo);
+  if (!remoteRes.stdout.includes('origin')) {
+    return { ok: false, error: 'โปรเจกต์นี้ยังไม่ได้เชื่อมต่อ Remote GitHub (origin)' };
+  }
+
+  // 1. Fetch
+  const fetchRes = await runGit(['fetch', 'origin'], repo);
+  if (!fetchRes.ok) {
+    return { ok: false, error: `Fetch failed: ${fetchRes.error}` };
+  }
+
+  // 2. Identify current branch
+  const branchRes = await runGit(['branch', '--show-current'], repo);
+  const branch = branchRes.stdout || 'main';
+
+  // 3. Reset hard to origin/branch
+  const resetRes = await runGit(['reset', '--hard', `origin/${branch}`], repo);
+  if (!resetRes.ok) {
+    return { ok: false, error: `Reset failed: ${resetRes.error}` };
+  }
+
+  // 4. Clean any leftover untracked debris
+  await runGit(['clean', '-fd'], repo);
+
+  // 5. Refresh DAG
+  const dagRes = await runGenerateDag(repo);
+  if (dagRes.ok && mainWindow) {
+    mainWindow.webContents.send('dag:updated', dagRes.data);
+  }
+
+  return {
+    ok: true,
+    message: `ดึงข้อมูลล่าสุดจาก origin/${branch} มาทับเรียบร้อยแล้ว! ✨`,
+    dagData: dagRes.data
+  };
+});
+
+ipcMain.handle('git:rollback', async (_event, commitHash) => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) {
+    return { ok: false, error: 'No active repository selected' };
+  }
+  if (!commitHash || commitHash === 'active-wip') {
+    return { ok: false, error: 'ไม่สามารถย้อนไปยังโหนดนี้ได้' };
+  }
+
+  const resetRes = await runGit(['reset', '--hard', commitHash], repo);
+  if (!resetRes.ok) {
+    return { ok: false, error: `Rollback failed: ${resetRes.error}` };
+  }
+
+  const dagRes = await runGenerateDag(repo);
+  if (dagRes.ok && mainWindow) {
+    mainWindow.webContents.send('dag:updated', dagRes.data);
+  }
+
+  return {
+    ok: true,
+    message: `ย้อนกลับไปยัง Checkpoint [${commitHash.slice(0, 7)}] เรียบร้อยแล้ว! ⏪`,
+    dagData: dagRes.data
+  };
+});
