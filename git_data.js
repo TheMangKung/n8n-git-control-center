@@ -2,15 +2,14 @@
 window.GIT_DAG_DATA = {
   "repo": "n8n-git-ui-main",
   "head_branch": "main",
-  "head_commit": "8db7de23b58aaeb7a8f65f633e25265ab9488a0c",
+  "head_commit": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
   "master_y": 780.0,
-  "generated_at": "2026-10-04T22:35:45.808002",
+  "generated_at": "2026-10-04T22:35:56.093847",
   "status": {
     "is_dirty": true,
-    "dirty_count": 2,
+    "dirty_count": 1,
     "changes": [
-      "M git_data.js",
-      "M index.html"
+      "M git_data.js"
     ]
   },
   "branches": [
@@ -24,23 +23,23 @@ window.GIT_DAG_DATA = {
     },
     {
       "name": "main",
-      "hash": "8db7de23b58aaeb7a8f65f633e25265ab9488a0c",
-      "short_hash": "8db7de2",
+      "hash": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
+      "short_hash": "ec9a038",
       "is_head": true,
       "is_merged_to_master": true,
       "lane": 0
     },
     {
       "name": "origin",
-      "hash": "8db7de23b58aaeb7a8f65f633e25265ab9488a0c",
-      "short_hash": "8db7de2",
+      "hash": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
+      "short_hash": "ec9a038",
       "is_head": false,
       "is_merged_to_master": false,
       "lane": 0
     }
   ],
   "stats": {
-    "total_commits": 12,
+    "total_commits": 13,
     "total_branches": 3,
     "total_lanes": 2
   },
@@ -295,10 +294,7 @@ window.GIT_DAG_DATA = {
       "author": "TheMangKung",
       "author_full": "TheMangKung <waesaref21245@gmail.com>",
       "date": "2026-10-04T22:27:01+07:00",
-      "branches": [
-        "main",
-        "origin"
-      ],
+      "branches": [],
       "tags": [],
       "parents": [
         "c2a1661c778a9d56f234320bac7afc67fc45ee5b"
@@ -310,6 +306,33 @@ window.GIT_DAG_DATA = {
       "y": 736,
       "width": 300,
       "height": 88,
+      "status": "normal"
+    },
+    {
+      "id": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
+      "hash": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
+      "short_hash": "ec9a038",
+      "short_id": "ec9a038",
+      "title": "fix: ensure DAG nodes render properly and add null safety for header elements",
+      "subject": "fix: ensure DAG nodes render properly and add null safety for header elements",
+      "author": "TheMangKung",
+      "author_full": "TheMangKung <waesaref21245@gmail.com>",
+      "date": "2026-10-04T22:35:45+07:00",
+      "branches": [
+        "main",
+        "origin"
+      ],
+      "tags": [],
+      "parents": [
+        "8db7de23b58aaeb7a8f65f633e25265ab9488a0c"
+      ],
+      "lane": 0,
+      "lane_name": "main",
+      "lane_color": "#06b6d4",
+      "x": 4315,
+      "y": 736,
+      "width": 300,
+      "height": 88,
       "status": "head"
     },
     {
@@ -317,22 +340,22 @@ window.GIT_DAG_DATA = {
       "hash": "active-wip",
       "short_hash": "WIP",
       "short_id": "WIP",
-      "title": "Working Tree (2 uncommitted changes)",
-      "subject": "Working Tree (2 uncommitted changes)",
+      "title": "Working Tree (1 uncommitted changes)",
+      "subject": "Working Tree (1 uncommitted changes)",
       "author": "Local Working Directory",
       "author_full": "Local Working Directory",
-      "date": "2026-10-04T22:35:44.646328",
+      "date": "2026-10-04T22:35:54.860042",
       "branches": [
         "main"
       ],
       "tags": [],
       "parents": [
-        "8db7de23b58aaeb7a8f65f633e25265ab9488a0c"
+        "ec9a038a958e8693078f4208d83f747acc3fd5bf"
       ],
       "lane": 0,
       "lane_name": "main (WIP) (WIP)",
       "lane_color": "#06b6d4",
-      "x": 4315,
+      "x": 4700,
       "y": 736,
       "width": 300,
       "height": 88,
@@ -441,14 +464,24 @@ window.GIT_DAG_DATA = {
       "svg_path": "M 3845 780.0 L 3930 780.0"
     },
     {
-      "id": "e-active-wip",
+      "id": "e-8db7de2-ec9a038",
       "from": "8db7de23b58aaeb7a8f65f633e25265ab9488a0c",
+      "to": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
+      "type": "normal",
+      "is_to_master": true,
+      "color": "#06b6d4",
+      "label": "MAIN",
+      "svg_path": "M 4230 780.0 L 4315 780.0"
+    },
+    {
+      "id": "e-active-wip",
+      "from": "ec9a038a958e8693078f4208d83f747acc3fd5bf",
       "to": "active-wip",
       "type": "wip",
       "is_to_master": true,
       "color": "#06b6d4",
       "label": "UNCOMMITTED WORK",
-      "svg_path": "M 4230 780.0 L 4315 780.0"
+      "svg_path": "M 4615 780.0 L 4700 780.0"
     }
   ],
   "diffs": {
@@ -662,7 +695,7 @@ window.GIT_DAG_DATA = {
       ],
       "full_output": "commit 8db7de23b58aaeb7a8f65f633e25265ab9488a0c\nAuthor:     TheMangKung <waesaref21245@gmail.com>\nAuthorDate: Sun Oct 4 22:27:01 2026 +0700\nCommit:     TheMangKung <waesaref21245@gmail.com>\nCommitDate: Sun Oct 4 22:27:01 2026 +0700\n\n    feat: add automatic cloud updates handshake alert and smooth UI transitions\n"
     },
-    "active-wip": {
+    "ec9a038a958e8693078f4208d83f747acc3fd5bf": {
       "files": [
         {
           "status": "M",
@@ -673,7 +706,16 @@ window.GIT_DAG_DATA = {
           "path": "index.html"
         }
       ],
-      "full_output": " git_data.js | 462 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++----\n index.html  |  21 ++-\n 2 files changed, 451 insertions(+), 32 deletions(-)\n"
+      "full_output": "commit ec9a038a958e8693078f4208d83f747acc3fd5bf\nAuthor:     TheMangKung <waesaref21245@gmail.com>\nAuthorDate: Sun Oct 4 22:35:45 2026 +0700\nCommit:     TheMangKung <waesaref21245@gmail.com>\nCommitDate: Sun Oct 4 22:35:45 2026 +0700\n\n    fix: ensure DAG nodes render properly and add null safety for header elements\n"
+    },
+    "active-wip": {
+      "files": [
+        {
+          "status": "M",
+          "path": "git_data.js"
+        }
+      ],
+      "full_output": " git_data.js | 84 +++++++++++++++++++++++++++++++++++++++++++++----------------\n 1 file changed, 63 insertions(+), 21 deletions(-)\n"
     }
   }
 };
