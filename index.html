@@ -1228,6 +1228,7 @@
         </svg>
       </div>
       <span class="brand-title">Git Time Machine</span>
+      <span class="repo-badge" id="repo-name"></span>
       
       <!-- Project Switcher (Desktop App) -->
       <div class="project-picker-wrap" id="project-picker-wrap" style="display:none;">
@@ -1549,10 +1550,15 @@
       const data = state.dagData;
 
       // Update Header Badges
-      document.getElementById('repo-name').textContent = data.repo;
+      const repoNameEl = document.getElementById('repo-name');
+      if (repoNameEl) {
+        repoNameEl.textContent = data.repo || '';
+      }
       const headBranchEl = document.getElementById('head-branch-name');
-      headBranchEl.textContent = data.head_branch;
-      headBranchEl.title = `Current HEAD: ${data.head_branch}`;
+      if (headBranchEl) {
+        headBranchEl.textContent = data.head_branch || 'main';
+        headBranchEl.title = `Current HEAD: ${data.head_branch || 'main'}`;
+      }
 
       const dataUpdatedEl = document.getElementById('data-updated-chip');
       if (dataUpdatedEl && data.generated_at) {
@@ -2432,9 +2438,12 @@
         }
       }
 
-      await loadProjects();
-      // Auto check cloud updates 1.5s after load
-      setTimeout(checkForCloudUpdatesQuietly, 1500);
+      async function initDesktopMode() {
+        await loadProjects();
+        setTimeout(checkForCloudUpdatesQuietly, 1500);
+      }
+
+      initDesktopMode();
     } else {
       // Fallback Standalone Zero-Server Browser Mode
       btnRefresh.onclick = () => {
