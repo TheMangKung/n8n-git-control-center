@@ -204,10 +204,41 @@ app.on('window-all-closed', () => {
 });
 
 // -------------------------------------------------------------
+// Helper: Fast Project Status Check
+// -------------------------------------------------------------
+async function checkProjectStatus(repoPath) {
+  if (!repoPath || !fs.existsSync(repoPath)) {
+    return { exists: false, isDirty: false, dirtyCount: 0, branch: '', hasRemote: false };
+  }
+  const branchRes = await runGit(['branch', '--show-current'], repoPath);
+  const statusRes = await runGit(['status', '--porcelain'], repoPath);
+  const remoteRes = await runGit(['remote', 'get-url', 'origin'], repoPath);
+
+  const dirtyLines = statusRes.ok ? statusRes.stdout.split('\n').filter(Boolean) : [];
+  return {
+    exists: true,
+    branch: branchRes.stdout || 'main',
+    isDirty: dirtyLines.length > 0,
+    dirtyCount: dirtyLines.length,
+    hasRemote: remoteRes.ok && Boolean(remoteRes.stdout),
+    remoteUrl: remoteRes.stdout || ''
+  };
+}
+
+// -------------------------------------------------------------
 // IPC Handlers: Projects Management
 // -------------------------------------------------------------
 ipcMain.handle('projects:get', () => {
   return loadConfig();
+});
+
+ipcMain.handle('projects:getStatuses', async () => {
+  const cfg = loadConfig();
+  const statuses = {};
+  for (const p of cfg.projects) {
+    statuses[p.path] = await checkProjectStatus(p.path);
+  }
+  return statuses;
 });
 
 ipcMain.handle('projects:add', async () => {
@@ -224,6 +255,38 @@ ipcMain.handle('projects:add', async () => {
   const gitDir = path.join(selectedPath, '.git');
   if (!fs.existsSync(gitDir)) {
     return { ok: false, error: 'โฟลเดอร์นี้ไม่ใช่ Git Repository (ไม่พบโฟลเดอร์ .git)' };
+  }
+
+  // Smart Auto-Ignore Guard: generate default .gitignore if none exists or ensure essentials are ignored
+  try {
+    const gitignorePath = path.join(selectedPath, '.gitignore');
+    const essentialIgnores = [
+      'node_modules/',
+      '.env',
+      '*.env',
+      'dist/',
+      'build/',
+      '*.log',
+      '*.tmp',
+      '.DS_Store',
+      'Thumbs.db'
+    ];
+    if (!fs.existsSync(gitignorePath)) {
+      fs.writeFileSync(gitignorePath, essentialIgnores.join('\n') + '\n', 'utf-8');
+    } else {
+      let existingContent = fs.readFileSync(gitignorePath, 'utf-8');
+      let appended = [];
+      essentialIgnores.forEach((item) => {
+        if (!existingContent.includes(item)) {
+          appended.push(item);
+        }
+      });
+      if (appended.length > 0) {
+        fs.appendFileSync(gitignorePath, '\n# Auto-protected ignores\n' + appended.join('\n') + '\n', 'utf-8');
+      }
+    }
+  } catch (ignErr) {
+    console.warn('Smart gitignore guard notice:', ignErr.message);
   }
 
   const cfg = loadConfig();

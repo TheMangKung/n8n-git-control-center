@@ -400,6 +400,94 @@
       box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
     }
 
+    /* Projects Hub Modal Styling */
+    .project-card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 380px;
+      overflow-y: auto;
+      margin: 14px 0;
+      padding-right: 4px;
+    }
+
+    .project-card-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #12141a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .project-card-item:hover {
+      background: #1b2029;
+      border-color: rgba(6, 182, 212, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .project-card-item.active {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.08);
+    }
+
+    .project-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+
+    .project-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .project-card-path {
+      font-size: 11px;
+      color: #64748b;
+      font-family: var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .project-status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .status-synced {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-dirty {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-local {
+      background: rgba(148, 163, 184, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
     /* Canvas Area */
     .canvas-container {
       position: absolute;
@@ -1115,6 +1203,7 @@
       <div class="project-picker-wrap" id="project-picker-wrap" style="display:none;">
         <span style="font-size: 11px; color: var(--ink-muted); font-weight:600;">PROJECT:</span>
         <select id="project-dropdown" class="project-select"></select>
+        <button class="btn" id="btn-projects-hub" style="height:24px; padding:0 8px; font-size:11px;" title="เปิด Dashboard ศูนย์รวมโปรเจกต์ทั้งหมด">📂 Hub</button>
         <button class="btn" id="btn-add-project" style="height:24px; padding:0 8px; font-size:11px;" title="เลือกโฟลเดอร์ Git Repo อื่น">+ Add</button>
       </div>
 
@@ -1245,6 +1334,28 @@
 
   <!-- Toast Notification Banner -->
   <div class="toast-banner" id="toast-banner"></div>
+
+  <!-- Projects Hub Modal -->
+  <div class="modal-overlay" id="projects-hub-modal" style="display:none;">
+    <div class="modal-box" style="width: 580px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="modal-title">📂 Projects Control Hub</div>
+        <button class="drawer-close" id="hub-close-btn" style="width:24px; height:24px; font-size:12px;">✕</button>
+      </div>
+      <p style="font-size:12px; color:#94a3b8; margin: 6px 0 12px; line-height: 1.5;">
+        ศูนย์รวมทุกโปรเจกต์ของคุณ พร้อมตรวจสอบสถานะการทำงาน (Sync / Uncommitted Changes) แบบ Real-time
+      </p>
+      
+      <div class="project-card-list" id="hub-project-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <button class="btn" id="hub-add-btn" style="font-size:12px;">+ เพิ่มโปรเจกต์ใหม่ (Auto Protect .gitignore)</button>
+        <button class="btn btn-primary" id="hub-done-btn">เสร็จสิ้น</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Checkpoint Modal -->
   <div class="modal-overlay" id="checkpoint-modal" style="display:none;">
@@ -1997,6 +2108,98 @@
         }
       };
 
+      // Projects Hub Modal Logic
+      const projectsHubModal = document.getElementById('projects-hub-modal');
+      const btnProjectsHub = document.getElementById('btn-projects-hub');
+      const hubCloseBtn = document.getElementById('hub-close-btn');
+      const hubDoneBtn = document.getElementById('hub-done-btn');
+      const hubAddBtn = document.getElementById('hub-add-btn');
+      const hubProjectList = document.getElementById('hub-project-list');
+
+      async function openProjectsHub() {
+        projectsHubModal.style.display = 'flex';
+        renderProjectsHub();
+      }
+
+      function closeProjectsHub() {
+        projectsHubModal.style.display = 'none';
+      }
+
+      btnProjectsHub.onclick = openProjectsHub;
+      hubCloseBtn.onclick = closeProjectsHub;
+      hubDoneBtn.onclick = closeProjectsHub;
+      projectsHubModal.onclick = (e) => {
+        if (e.target === projectsHubModal) closeProjectsHub();
+      };
+
+      async function renderProjectsHub() {
+        hubProjectList.innerHTML = '<div style="padding:16px; text-align:center; color:#64748b; font-size:12px;">⏳ กำลังตรวจสอบสถานะทุกโปรเจกต์...</div>';
+        const cfg = await window.electronAPI.getProjects();
+        const statuses = await window.electronAPI.getProjectStatuses();
+
+        hubProjectList.innerHTML = '';
+        if (!cfg.projects || !cfg.projects.length) {
+          hubProjectList.innerHTML = '<div style="padding:16px; text-align:center; color:#64748b; font-size:12px;">ยังไม่มีโปรเจกต์ในระบบ</div>';
+          return;
+        }
+
+        cfg.projects.forEach((p) => {
+          const st = statuses[p.path] || {};
+          const item = document.createElement('div');
+          item.className = `project-card-item ${p.path === cfg.activePath ? 'active' : ''}`;
+
+          let statusTag = '';
+          if (st.isDirty) {
+            statusTag = `<span class="project-status-tag status-dirty">🟠 ${st.dirtyCount} files uncommitted</span>`;
+          } else if (st.hasRemote) {
+            statusTag = `<span class="project-status-tag status-synced">🟢 Synced (${st.branch || 'main'})</span>`;
+          } else {
+            statusTag = `<span class="project-status-tag status-local">⚪ Local Only</span>`;
+          }
+
+          item.innerHTML = `
+            <div class="project-info">
+              <div class="project-card-title">
+                ${p.path === cfg.activePath ? '<span style="color:#06b6d4;">▶</span>' : ''}
+                ${p.name}
+              </div>
+              <div class="project-card-path">${p.path}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${statusTag}
+            </div>
+          `;
+
+          item.onclick = async () => {
+            if (p.path === cfg.activePath) {
+              closeProjectsHub();
+              return;
+            }
+            closeProjectsHub();
+            projectDropdown.value = p.path;
+            projectDropdown.dispatchEvent(new Event('change'));
+          };
+
+          hubProjectList.appendChild(item);
+        });
+      }
+
+      hubAddBtn.onclick = async () => {
+        const res = await window.electronAPI.addProject();
+        if (res.canceled) return;
+        if (res.ok) {
+          await loadProjects();
+          if (res.dagData) {
+            state.dagData = res.dagData;
+            renderGraph(res.dagData);
+          }
+          await renderProjectsHub();
+          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ!', 'success');
+        } else {
+          showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
+        }
+      };
+
       // Add Project
       btnAddProject.onclick = async () => {
         const res = await window.electronAPI.addProject();
@@ -2007,7 +2210,7 @@
             state.dagData = res.dagData;
             renderGraph(res.dagData);
           }
-          showToast('เพิ่มโปรเจกต์สำเร็จ!', 'success');
+          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ!', 'success');
         } else {
           showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
         }
