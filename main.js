@@ -3,6 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const { execFile } = require('child_process');
 
+if (process.platform === 'darwin') {
+  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin'];
+  process.env.PATH = `${extraPaths.join(':')}:${process.env.PATH || ''}`;
+}
+
 let mainWindow = null;
 let activeWatcher = null;
 let watcherDebounceTimer = null;
@@ -306,6 +311,82 @@ ipcMain.handle('projects:add', async () => {
   const dagRes = await runGenerateDag(selectedPath);
 
   return { ok: true, activePath: selectedPath, projects: cfg.projects, dagData: dagRes.data };
+});
+
+ipcMain.handle('projects:clone', async (_event, { repoUrl, customFolder } = {}) => {
+  if (!repoUrl || !repoUrl.trim()) {
+    return { ok: false, error: 'กรุณาระบุ URL ของ GitHub Repository' };
+  }
+
+  let cleanUrl = repoUrl.trim();
+  // Support shorthand "username/repo" or "repo"
+  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://') && !cleanUrl.startsWith('git@')) {
+    if (cleanUrl.includes('/')) {
+      cleanUrl = `https://github.com/${cleanUrl}.git`;
+    } else {
+      cleanUrl = `https://github.com/TheMangKung/${cleanUrl}.git`;
+    }
+  }
+
+  // Derive repo name
+  const repoNameMatch = cleanUrl.match(/\/([^\/]+?)(\.git)?$/);
+  const repoName = repoNameMatch ? repoNameMatch[1] : 'cloned-repo';
+
+  // Ask user to pick parent directory where repo will be cloned
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: `เลือกโฟลเดอร์สำหรับดาวน์โหลด ${repoName}`,
+    properties: ['openDirectory']
+  });
+
+  if (result.canceled || !result.filePaths.length) {
+    return { canceled: true };
+  }
+
+  const parentDir = result.filePaths[0];
+  const targetDir = path.join(parentDir, customFolder || repoName);
+
+  if (fs.existsSync(targetDir)) {
+    return { ok: false, error: `โฟลเดอร์ "${targetDir}" มีอยู่แล้วในเครื่อง กรุณาเลือกโฟลเดอร์อื่นหรือลบโฟลเดอร์เดิมออกก่อน` };
+  }
+
+  return new Promise((resolve) => {
+    execFile(
+      'git',
+      ['clone', cleanUrl, targetDir],
+      { maxBuffer: 50 * 1024 * 1024, encoding: 'utf8', windowsHide: true },
+      async (err, stdout, stderr) => {
+        if (err) {
+          return resolve({ ok: false, error: `Clone ล้มเหลว: ${(stderr || err.message).trim()}` });
+        }
+
+        // Add to config
+        const cfg = loadConfig();
+        const existing = cfg.projects.find((p) => p.path === targetDir);
+        if (!existing) {
+          cfg.projects.push({
+            id: 'proj-' + Date.now(),
+            name: repoName,
+            path: targetDir,
+            lastOpened: Date.now()
+          });
+        }
+        cfg.activePath = targetDir;
+        saveConfig(cfg);
+
+        watchRepo(targetDir);
+        const dagRes = await runGenerateDag(targetDir);
+
+        resolve({
+          ok: true,
+          repoName,
+          activePath: targetDir,
+          projects: cfg.projects,
+          dagData: dagRes.data,
+          hasPackageJson: fs.existsSync(path.join(targetDir, 'package.json'))
+        });
+      }
+    );
+  });
 });
 
 ipcMain.handle('projects:switch', async (_event, targetPath) => {

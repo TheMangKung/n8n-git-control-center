@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getProjects: () => ipcRenderer.invoke('projects:get'),
   getProjectStatuses: () => ipcRenderer.invoke('projects:getStatuses'),
   addProject: () => ipcRenderer.invoke('projects:add'),
+  cloneProject: (params) => ipcRenderer.invoke('projects:clone', params),
   removeProject: (projectPath) => ipcRenderer.invoke('projects:remove', projectPath),
   switchProject: (projectPath) => ipcRenderer.invoke('projects:switch', projectPath),
   

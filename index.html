@@ -1250,9 +1250,13 @@
           <span>Hub</span>
           <span class="kbd-hint">H</span>
         </button>
-        <button class="btn" id="btn-add-project" style="height:22px; padding:0 6px;" title="เลือกโฟลเดอร์ Git Repo อื่น">
+        <button class="btn" id="btn-add-project" style="height:22px; padding:0 6px;" title="เลือกโฟลเดอร์ Git Repo ในเครื่อง">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span>Add</span>
+        </button>
+        <button class="btn" id="btn-clone-project" style="height:22px; padding:0 6px; border-color:rgba(56,189,248,0.4); color:#38bdf8;" title="Clone โปรเจกต์จาก GitHub ลงเครื่อง">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Clone</span>
         </button>
       </div>
 
@@ -1409,11 +1413,17 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:12px;">
-        <button class="btn" id="hub-add-btn" style="font-size:11.5px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          เพิ่มโปรเจกต์ใหม่
-        </button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:12px; gap:8px;">
+        <div style="display:flex; gap:6px;">
+          <button class="btn" id="hub-add-btn" style="font-size:11.5px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            เพิ่มจากในเครื่อง
+          </button>
+          <button class="btn" id="hub-clone-btn" style="font-size:11.5px; border-color: rgba(56,189,248,0.4); color: #38bdf8;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Clone จาก GitHub
+          </button>
+        </div>
         <button class="btn btn-primary" id="hub-done-btn">เสร็จสิ้น</button>
       </div>
     </div>
@@ -1455,6 +1465,34 @@
         <button class="btn btn-save" id="modal-confirm-btn">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           บันทึก & Push
+        </button>
+      </div>
+    </div>
+  <!-- Clone from GitHub Modal -->
+  <div class="modal-overlay" id="clone-modal" style="display:none;">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Clone จาก GitHub ลงเครื่อง
+      </div>
+      <p style="font-size:11.5px; color:#94a3b8; margin: 6px 0 10px; line-height: 1.4;">
+        ดาวน์โหลดโปรเจกต์จาก GitHub ลงเครื่องนี้ในคลิกเดียว พร้อมเชื่อมต่อ Time Machine ให้อัตโนมัติ
+      </p>
+      <div style="margin-bottom:10px;">
+        <label style="display:block; font-size:11px; font-weight:600; color:#cbd5e1; margin-bottom:4px;">GitHub Repository URL หรือชื่อ Repo:</label>
+        <input type="text" id="clone-repo-input" class="modal-input" placeholder="เช่น TheMangKung/p-portfolio หรือ https://github.com/..." value="TheMangKung/p-portfolio">
+      </div>
+      <div style="display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;">
+        <span style="font-size:10.5px; color:#64748b; align-self:center;">ตัวอย่างด่วน:</span>
+        <button type="button" class="btn" style="font-size:10.5px; padding:2px 8px; height:20px;" onclick="document.getElementById('clone-repo-input').value='TheMangKung/p-portfolio'">p-portfolio</button>
+        <button type="button" class="btn" style="font-size:10.5px; padding:2px 8px; height:20px;" onclick="document.getElementById('clone-repo-input').value='TheMangKung/Check-in-main'">Check-in-main</button>
+        <button type="button" class="btn" style="font-size:10.5px; padding:2px 8px; height:20px;" onclick="document.getElementById('clone-repo-input').value='TheMangKung/WUSAB-web-main'">WUSAB-web-main</button>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:6px;">
+        <button class="btn" id="clone-cancel-btn">ยกเลิก</button>
+        <button class="btn btn-primary" id="clone-confirm-btn" style="background:#0284c7; border-color:#0284c7; color:#fff;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          เลือกโฟลเดอร์ &amp; Clone 🚀
         </button>
       </div>
     </div>
@@ -2364,6 +2402,78 @@
           showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
         }
       };
+
+      // Clone Project from GitHub Handlers
+      const btnCloneProject = document.getElementById('btn-clone-project');
+      const hubCloneBtn = document.getElementById('hub-clone-btn');
+      const cloneModal = document.getElementById('clone-modal');
+      const cloneRepoInput = document.getElementById('clone-repo-input');
+      const cloneCancelBtn = document.getElementById('clone-cancel-btn');
+      const cloneConfirmBtn = document.getElementById('clone-confirm-btn');
+
+      function openCloneModal() {
+        if (projectsHubModal) projectsHubModal.style.display = 'none';
+        if (cloneModal) cloneModal.style.display = 'flex';
+        setTimeout(() => { if (cloneRepoInput) cloneRepoInput.focus(); }, 60);
+      }
+
+      function closeCloneModal() {
+        if (cloneModal) cloneModal.style.display = 'none';
+      }
+
+      if (btnCloneProject) btnCloneProject.onclick = openCloneModal;
+      if (hubCloneBtn) hubCloneBtn.onclick = openCloneModal;
+      if (cloneCancelBtn) cloneCancelBtn.onclick = closeCloneModal;
+      if (cloneModal) {
+        cloneModal.onclick = (e) => {
+          if (e.target === cloneModal) closeCloneModal();
+        };
+      }
+
+      if (cloneRepoInput) {
+        cloneRepoInput.onkeydown = (e) => {
+          if (e.key === 'Enter') cloneConfirmBtn.click();
+          if (e.key === 'Escape') closeCloneModal();
+        };
+      }
+
+      if (cloneConfirmBtn) {
+        cloneConfirmBtn.onclick = async () => {
+          const repoUrl = cloneRepoInput.value.trim();
+          if (!repoUrl) {
+            showToast('กรุณาระบุ URL ของ GitHub Repository', 'error');
+            return;
+          }
+
+          closeCloneModal();
+          showToast('⏳ กำลังดาวน์โหลด (Clone) โปรเจกต์จาก GitHub...', 'info', 15000);
+
+          const res = await window.electronAPI.cloneProject({ repoUrl });
+          if (res.canceled) {
+            showToast('ยกเลิกการเลือกโฟลเดอร์', 'info', 2000);
+            return;
+          }
+
+          if (res.ok) {
+            await loadProjects();
+            if (res.dagData) {
+              state.dagData = res.dagData;
+              renderGraph(res.dagData);
+            }
+            if (typeof renderProjectsHub === 'function') {
+              await renderProjectsHub();
+            }
+            showToast(`🎉 Clone โปรเจกต์ "${res.repoName}" ลงเครื่องสำเร็จแล้ว!`, 'success', 5000);
+            if (res.hasPackageJson) {
+              setTimeout(() => {
+                showToast('💡 โปรเจกต์มี package.json อย่าลืมเปิดเทอร์มินัลแล้วพิมพ์ npm install ก่อนรันนะครับ', 'info', 7000);
+              }, 2500);
+            }
+          } else {
+            showToast(res.error || 'Clone โปรเจกต์ไม่สำเร็จ', 'error', 6000);
+          }
+        };
+      }
 
       // Save Checkpoint Trigger
       btnCheckpoint.onclick = openCheckpointModal;
