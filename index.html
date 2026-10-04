@@ -1468,8 +1468,10 @@
         </button>
       </div>
     </div>
+  </div>
+
   <!-- Clone from GitHub Modal -->
-  <div class="modal-overlay" id="clone-modal" style="display:none;">
+  <div class="modal-overlay" id="clone-modal" style="display:none; z-index:999999;">
     <div class="modal-box" style="max-width:440px;">
       <div class="modal-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -2169,6 +2171,94 @@
       if (e.key === 'Escape') closeCheckpointModal();
     };
 
+    // Clone Modal Global Handlers (Works in both Electron and Zero-Server Browser)
+    const btnCloneProject = document.getElementById('btn-clone-project');
+    const hubCloneBtn = document.getElementById('hub-clone-btn');
+    const cloneModal = document.getElementById('clone-modal');
+    const cloneRepoInput = document.getElementById('clone-repo-input');
+    const cloneCancelBtn = document.getElementById('clone-cancel-btn');
+    const cloneConfirmBtn = document.getElementById('clone-confirm-btn');
+
+    function openCloneModal() {
+      const projectsHubModal = document.getElementById('projects-hub-modal');
+      if (projectsHubModal) projectsHubModal.style.display = 'none';
+      if (cloneModal) cloneModal.style.display = 'flex';
+      setTimeout(() => { if (cloneRepoInput) cloneRepoInput.focus(); }, 60);
+    }
+
+    function closeCloneModal() {
+      if (cloneModal) cloneModal.style.display = 'none';
+    }
+
+    if (btnCloneProject) btnCloneProject.onclick = openCloneModal;
+    if (hubCloneBtn) hubCloneBtn.onclick = openCloneModal;
+    if (cloneCancelBtn) cloneCancelBtn.onclick = closeCloneModal;
+    if (cloneModal) {
+      cloneModal.onclick = (e) => {
+        if (e.target === cloneModal) closeCloneModal();
+      };
+    }
+
+    if (cloneRepoInput) {
+      cloneRepoInput.onkeydown = (e) => {
+        if (e.key === 'Enter') cloneConfirmBtn.click();
+        if (e.key === 'Escape') closeCloneModal();
+      };
+    }
+
+    if (cloneConfirmBtn) {
+      cloneConfirmBtn.onclick = async () => {
+        const repoUrl = (cloneRepoInput ? cloneRepoInput.value : '').trim();
+        if (!repoUrl) {
+          showToast('กรุณาระบุ URL ของ GitHub Repository', 'error');
+          return;
+        }
+
+        closeCloneModal();
+
+        if (window.electronAPI && typeof window.electronAPI.cloneProject === 'function') {
+          showToast('⏳ กำลังดาวน์โหลด (Clone) โปรเจกต์จาก GitHub...', 'info', 15000);
+          const res = await window.electronAPI.cloneProject({ repoUrl });
+          if (res.canceled) {
+            showToast('ยกเลิกการเลือกโฟลเดอร์', 'info', 2000);
+            return;
+          }
+
+          if (res.ok) {
+            if (typeof loadProjects === 'function') await loadProjects();
+            if (res.dagData) {
+              state.dagData = res.dagData;
+              renderGraph(res.dagData);
+            }
+            if (typeof renderProjectsHub === 'function') {
+              await renderProjectsHub();
+            }
+            showToast(`🎉 Clone โปรเจกต์ "${res.repoName}" ลงเครื่องสำเร็จแล้ว!`, 'success', 5000);
+            if (res.hasPackageJson) {
+              setTimeout(() => {
+                showToast('💡 โปรเจกต์มี package.json อย่าลืมเปิด Terminal แล้วพิมพ์ npm install ก่อนรันนะครับ', 'info', 7000);
+              }, 2500);
+            }
+          } else {
+            showToast(res.error || 'Clone โปรเจกต์ไม่สำเร็จ', 'error', 6000);
+          }
+        } else {
+          // Zero-Server Web Browser Mode: copy command to clipboard
+          let cleanUrl = repoUrl;
+          if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://') && !cleanUrl.startsWith('git@')) {
+            cleanUrl = cleanUrl.includes('/') ? `https://github.com/${cleanUrl}.git` : `https://github.com/TheMangKung/${cleanUrl}.git`;
+          }
+          const cmd = `git clone ${cleanUrl}`;
+          try {
+            await navigator.clipboard.writeText(cmd);
+            showToast(`✓ คัดลอกคำสั่ง "${cmd}" แล้ว! นำไปวางใน Terminal ได้เลย 🚀`, 'success', 6000);
+          } catch (e) {
+            prompt('คัดลอกคำสั่งนี้ไปรันใน Terminal:', cmd);
+          }
+        }
+      };
+    }
+
     // Electron Desktop App Mode
     if (window.electronAPI) {
       // Reveal Desktop-specific UI elements
@@ -2402,78 +2492,6 @@
           showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
         }
       };
-
-      // Clone Project from GitHub Handlers
-      const btnCloneProject = document.getElementById('btn-clone-project');
-      const hubCloneBtn = document.getElementById('hub-clone-btn');
-      const cloneModal = document.getElementById('clone-modal');
-      const cloneRepoInput = document.getElementById('clone-repo-input');
-      const cloneCancelBtn = document.getElementById('clone-cancel-btn');
-      const cloneConfirmBtn = document.getElementById('clone-confirm-btn');
-
-      function openCloneModal() {
-        if (projectsHubModal) projectsHubModal.style.display = 'none';
-        if (cloneModal) cloneModal.style.display = 'flex';
-        setTimeout(() => { if (cloneRepoInput) cloneRepoInput.focus(); }, 60);
-      }
-
-      function closeCloneModal() {
-        if (cloneModal) cloneModal.style.display = 'none';
-      }
-
-      if (btnCloneProject) btnCloneProject.onclick = openCloneModal;
-      if (hubCloneBtn) hubCloneBtn.onclick = openCloneModal;
-      if (cloneCancelBtn) cloneCancelBtn.onclick = closeCloneModal;
-      if (cloneModal) {
-        cloneModal.onclick = (e) => {
-          if (e.target === cloneModal) closeCloneModal();
-        };
-      }
-
-      if (cloneRepoInput) {
-        cloneRepoInput.onkeydown = (e) => {
-          if (e.key === 'Enter') cloneConfirmBtn.click();
-          if (e.key === 'Escape') closeCloneModal();
-        };
-      }
-
-      if (cloneConfirmBtn) {
-        cloneConfirmBtn.onclick = async () => {
-          const repoUrl = cloneRepoInput.value.trim();
-          if (!repoUrl) {
-            showToast('กรุณาระบุ URL ของ GitHub Repository', 'error');
-            return;
-          }
-
-          closeCloneModal();
-          showToast('⏳ กำลังดาวน์โหลด (Clone) โปรเจกต์จาก GitHub...', 'info', 15000);
-
-          const res = await window.electronAPI.cloneProject({ repoUrl });
-          if (res.canceled) {
-            showToast('ยกเลิกการเลือกโฟลเดอร์', 'info', 2000);
-            return;
-          }
-
-          if (res.ok) {
-            await loadProjects();
-            if (res.dagData) {
-              state.dagData = res.dagData;
-              renderGraph(res.dagData);
-            }
-            if (typeof renderProjectsHub === 'function') {
-              await renderProjectsHub();
-            }
-            showToast(`🎉 Clone โปรเจกต์ "${res.repoName}" ลงเครื่องสำเร็จแล้ว!`, 'success', 5000);
-            if (res.hasPackageJson) {
-              setTimeout(() => {
-                showToast('💡 โปรเจกต์มี package.json อย่าลืมเปิดเทอร์มินัลแล้วพิมพ์ npm install ก่อนรันนะครับ', 'info', 7000);
-              }, 2500);
-            }
-          } else {
-            showToast(res.error || 'Clone โปรเจกต์ไม่สำเร็จ', 'error', 6000);
-          }
-        };
-      }
 
       // Save Checkpoint Trigger
       btnCheckpoint.onclick = openCheckpointModal;
