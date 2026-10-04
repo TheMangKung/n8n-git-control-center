@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   syncOverwrite: () => ipcRenderer.invoke('git:syncOverwrite'),
   rollback: (commitHash) => ipcRenderer.invoke('git:rollback', commitHash),
   refreshDag: () => ipcRenderer.invoke('git:refreshDag'),
+  publishToGitHub: (isPrivate) => ipcRenderer.invoke('git:publishToGitHub', isPrivate),
 
   // Events from Main Process
   onDagUpdated: (callback) => {

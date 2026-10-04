@@ -1929,9 +1929,25 @@
             let clean = info.remoteUrl.replace(/^git@github\.com:/, '').replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '');
             remoteEl.textContent = clean || 'GitHub Connected';
             document.getElementById('remote-badge').style.color = '#38bdf8';
+            document.getElementById('remote-badge').style.cursor = 'default';
+            document.getElementById('remote-badge').onclick = null;
           } else {
-            remoteEl.textContent = 'Local Only (No Remote)';
-            document.getElementById('remote-badge').style.color = '#94a3b8';
+            remoteEl.textContent = '+ Publish to GitHub';
+            document.getElementById('remote-badge').style.color = '#f59e0b';
+            document.getElementById('remote-badge').style.cursor = 'pointer';
+            document.getElementById('remote-badge').title = 'คลิกเพื่อสร้าง Repository บน GitHub ให้อัตโนมัติ';
+            document.getElementById('remote-badge').onclick = async () => {
+              const ok = confirm(`ต้องการสร้าง Repository บน GitHub ให้โปรเจกต์ "${info.repoName}" และ Push โค้ดทันทีหรือไม่?`);
+              if (!ok) return;
+              showToast('⏳ กำลังสร้าง Repository บน GitHub และ Push โค้ด...', 'info', 10000);
+              const pubRes = await window.electronAPI.publishToGitHub(false);
+              if (pubRes.ok) {
+                showToast(pubRes.message, 'success', 5000);
+                updateRemoteStatus();
+              } else {
+                showToast(pubRes.error || 'สร้าง Repository ไม่สำเร็จ', 'error', 6000);
+              }
+            };
           }
           const branchEl = document.getElementById('head-branch-name');
           if (branchEl) branchEl.textContent = info.branch;

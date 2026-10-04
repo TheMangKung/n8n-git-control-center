@@ -445,3 +445,41 @@ ipcMain.handle('git:rollback', async (_event, commitHash) => {
     dagData: dagRes.data
   };
 });
+
+ipcMain.handle('git:publishToGitHub', async (_event, isPrivate = true) => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) {
+    return { ok: false, error: 'No active repository selected' };
+  }
+
+  const repoName = path.basename(repo);
+  const ghCli = fs.existsSync('C:\\Program Files\\GitHub CLI\\gh.exe')
+    ? 'C:\\Program Files\\GitHub CLI\\gh.exe'
+    : 'gh';
+
+  return new Promise((resolve) => {
+    const visibilityFlag = isPrivate ? '--private' : '--public';
+    execFile(
+      ghCli,
+      ['repo', 'create', repoName, visibilityFlag, `--source=${repo}`, '--remote=origin', '--push'],
+      { cwd: repo, encoding: 'utf8', windowsHide: true },
+      async (err, stdout, stderr) => {
+        if (err) {
+          resolve({ ok: false, error: stderr || err.message });
+        } else {
+          const dagRes = await runGenerateDag(repo);
+          if (dagRes.ok && mainWindow) {
+            mainWindow.webContents.send('dag:updated', dagRes.data);
+          }
+          resolve({
+            ok: true,
+            message: `สร้าง Repository [${repoName}] บน GitHub และ Push เรียบร้อยแล้ว! 🚀`,
+            url: stdout.trim()
+          });
+        }
+      }
+    );
+  });
+});
+
