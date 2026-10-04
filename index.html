@@ -1657,19 +1657,35 @@
         const bodyEl = document.createElement('div');
         bodyEl.className = 'node-body';
 
+        const rawTitle = node.title || node.subject || `บันทึกจุดเซฟ #${node.short_id || (node.id ? node.id.substring(0, 7) : '')}`;
+        // Clean up title for concise, friendly display (e.g. "แก้... ครั้งที่ ...")
+        let displayTitle = rawTitle;
+        if (displayTitle.startsWith('Checkpoint:')) {
+          displayTitle = displayTitle.replace(/^Checkpoint:\s*[\d-]+\s*[\d:]+\s*-\s*/, 'จุดเซฟ: ');
+        } else if (displayTitle.startsWith('feat:')) {
+          displayTitle = displayTitle.replace(/^feat:\s*/, 'เพิ่มฟีเจอร์: ');
+        } else if (displayTitle.startsWith('fix(ci):') || displayTitle.startsWith('fix:')) {
+          displayTitle = displayTitle.replace(/^fix(\([^)]+\))?:\s*/, 'แก้ปัญหา: ');
+        } else if (displayTitle.startsWith('perf:')) {
+          displayTitle = displayTitle.replace(/^perf:\s*/, 'เพิ่มความเร็ว: ');
+        } else if (displayTitle.startsWith('chore:')) {
+          displayTitle = displayTitle.replace(/^chore:\s*/, 'จัดระเบียบไฟล์: ');
+        }
+
         const titleEl = document.createElement('div');
         titleEl.className = 'node-title';
-        titleEl.textContent = node.title;
-        titleEl.title = node.title;
+        titleEl.textContent = displayTitle;
+        titleEl.title = rawTitle;
 
         const subEl = document.createElement('div');
         subEl.className = 'node-subtitle';
+        const displayHash = node.short_id || (node.id ? node.id.substring(0, 7) : 'Point');
         if (node.is_wip) {
           subEl.innerHTML = `<span style="color:#fbbf24;font-weight:700;">● UNCOMMITTED</span> • <span>Working Tree</span>`;
-          subEl.title = `Local uncommitted changes (${node.title})`;
+          subEl.title = `Local uncommitted changes (${rawTitle})`;
         } else {
-          subEl.innerHTML = `<span>#${node.short_id}</span> • <span>${formatDate(node.date)}</span>`;
-          subEl.title = `Commit #${node.short_id} by ${node.author} (${node.date})`;
+          subEl.innerHTML = `<span>#${displayHash}</span> • <span>${formatDate(node.date)}</span>`;
+          subEl.title = `จุดเซฟ #${displayHash} โดย ${node.author || 'Me'} (${node.date || ''})`;
         }
 
         const branchBox = document.createElement('div');
@@ -1825,14 +1841,15 @@
 
       const isWip = (node.id === 'working-directory-wip' || node.is_wip);
       const hashEl = document.getElementById('drawer-hash-text');
-      hashEl.textContent = isWip ? 'WIP (Uncommitted)' : node.id.substring(0, 12);
-      hashEl.title = node.id;
-      document.getElementById('drawer-author').textContent = isWip ? 'Local Working Tree' : node.author_full;
-      document.getElementById('drawer-date').textContent = isWip ? 'Current Local Changes' : node.date;
-      document.getElementById('drawer-parents').textContent = node.parents.map(p => p.substring(0, 7)).join(', ') || 'Root';
+      hashEl.textContent = isWip ? 'WIP (Uncommitted)' : (node.short_id || (node.id ? node.id.substring(0, 10) : 'Point'));
+      hashEl.title = node.id || '';
+      document.getElementById('drawer-author').textContent = isWip ? 'Local Working Tree' : (node.author_full || node.author || 'User');
+      document.getElementById('drawer-date').textContent = isWip ? 'Current Local Changes' : (node.date || '');
+      document.getElementById('drawer-parents').textContent = (node.parents && node.parents.length) ? node.parents.map(p => p.substring(0, 7)).join(', ') : 'Root';
       const msgEl = document.getElementById('drawer-message');
-      msgEl.textContent = node.title;
-      msgEl.title = node.title;
+      const fullMsg = node.title || node.subject || 'บันทึกจุดเซฟ';
+      msgEl.textContent = fullMsg;
+      msgEl.title = fullMsg;
 
       const tagBox = document.getElementById('drawer-branch-tags');
       tagBox.innerHTML = '';

@@ -19,20 +19,20 @@ from collections import deque
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Determine REPO_ROOT: CLI argument > parent repo > current dir
+# Determine REPO_ROOT: CLI argument > current dir > parent repo
 if len(sys.argv) > 1 and os.path.isdir(sys.argv[1]):
     REPO_ROOT = os.path.abspath(sys.argv[1])
+elif os.path.exists(os.path.join(CURRENT_DIR, ".git")):
+    REPO_ROOT = CURRENT_DIR
 else:
-    candidate_parent2 = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
     candidate_parent1 = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
-    if os.path.exists(os.path.join(candidate_parent2, ".git")):
-        REPO_ROOT = candidate_parent2
-    elif os.path.exists(os.path.join(candidate_parent1, ".git")):
+    candidate_parent2 = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
+    if os.path.exists(os.path.join(candidate_parent1, ".git")) and not os.path.samefile(candidate_parent1, os.path.expanduser("~")):
         REPO_ROOT = candidate_parent1
-    elif os.path.exists(os.path.join(CURRENT_DIR, ".git")):
-        REPO_ROOT = CURRENT_DIR
+    elif os.path.exists(os.path.join(candidate_parent2, ".git")) and not os.path.samefile(candidate_parent2, os.path.expanduser("~")):
+        REPO_ROOT = candidate_parent2
     else:
-        REPO_ROOT = os.getcwd()
+        REPO_ROOT = CURRENT_DIR
 
 OUTPUT_JS = os.path.join(CURRENT_DIR, "git_data.js")
 
@@ -55,8 +55,8 @@ def generate():
     status_raw = run_git(["status", "--porcelain"])
     dirty_lines = [l.strip() for l in status_raw.splitlines() if l.strip()]
 
-    # 2. Branches
-    ref_raw = run_git(["for-each-ref", "--format=%(refname:short)|||%(objectname)|||%(HEAD)", "refs/heads/"])
+    # 2. Branches (Collect both local heads and remote tracking branches)
+    ref_raw = run_git(["for-each-ref", "--format=%(refname:short)|||%(objectname)|||%(HEAD)", "refs/heads/", "refs/remotes/"])
     branches = {}
     head_branch = "main"
     for line in ref_raw.strip().splitlines():
@@ -65,11 +65,16 @@ def generate():
         parts = line.split("|||")
         if len(parts) >= 3:
             b_name = parts[0].strip()
+            # Clean remote prefix like origin/main to show cleanly or avoid duplicates if local exists
+            clean_name = b_name.replace("origin/", "") if b_name.startswith("origin/") and not b_name.endswith("/HEAD") else b_name
+            if clean_name.endswith("/HEAD"):
+                continue
             b_hash = parts[1].strip()
             is_head = parts[2].strip() == "*"
-            branches[b_name] = {"hash": b_hash, "is_head": is_head}
+            if clean_name not in branches or is_head:
+                branches[clean_name] = {"hash": b_hash, "is_head": is_head}
             if is_head:
-                head_branch = b_name
+                head_branch = clean_name
 
     # Check for detached HEAD or empty branch
     head_rev = run_git(["rev-parse", "HEAD"]).strip()
@@ -90,9 +95,9 @@ def generate():
         if len(parts) >= 2:
             tags.setdefault(parts[1].strip().lstrip("*"), []).append(parts[0].strip())
 
-    # 4. Commits
+    # 4. Commits (Scan both local and remote commits)
     log_raw = run_git([
-        "log", "--branches", "--topo-order",
+        "log", "--branches", "--remotes", "--topo-order",
         "--format=%H|||%h|||%P|||%an|||%ae|||%aI|||%s|||%D###ENDRECORD###"
     ])
 
@@ -155,7 +160,7 @@ def generate():
         commit_lane_color[c] = "#06b6d4"
 
     # 6. Topological Ordering (Parents ALWAYS appear before Children on X-axis)
-    topo_raw = run_git(["log", "--branches", "--topo-order", "--reverse", "--format=%H"])
+    topo_raw = run_git(["log", "--branches", "--remotes", "--topo-order", "--reverse", "--format=%H"])
     topo_order = [s.strip() for s in topo_raw.splitlines() if s.strip() and s.strip() in commits]
     for c in commits:
         if c not in topo_order:
@@ -322,8 +327,11 @@ def generate():
             "id": c,
             "hash": c,
             "short_hash": c_data["short_hash"],
+            "short_id": c_data["short_hash"],
+            "title": c_data["subject"],
             "subject": c_data["subject"],
             "author": c_data["author_name"],
+            "author_full": c_data["author"],
             "date": c_data["date"],
             "branches": c_data["branches"],
             "tags": c_data["tags"],
@@ -367,8 +375,11 @@ def generate():
                 "id": active_wip_id,
                 "hash": active_wip_id,
                 "short_hash": "WIP",
+                "short_id": "WIP",
+                "title": f"Working Tree ({len(dirty_lines)} uncommitted changes)",
                 "subject": f"Working Tree ({len(dirty_lines)} uncommitted changes)",
                 "author": "Local Working Directory",
+                "author_full": "Local Working Directory",
                 "date": datetime.now().isoformat(),
                 "branches": [head_branch] if head_branch else [],
                 "tags": [],
