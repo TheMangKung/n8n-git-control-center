@@ -11,6 +11,7 @@
   "build": {
     "appId": "com.n8n.gitcontrolcenter",
     "productName": "n8n Git Control Center",
+    "publish": null,
     "files": [
       "main.js",
       "preload.js",
