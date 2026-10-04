@@ -6,27 +6,27 @@
   <title>Git DAG Visualizer - n8n Workflow Style</title>
   <style>
     :root {
-      --bg-canvas: #121419;
-      --bg-stripes: rgba(255, 255, 255, 0.022);
-      --surface-card: #1e222a;
-      --surface-card-hover: #262b35;
-      --surface-card-selected: #222731;
-      --surface-header: rgba(20, 23, 29, 0.92);
-      --surface-drawer: #171a21;
-      --surface-code: #0f1115;
+      --bg-canvas: #101216;
+      --bg-stripes: rgba(255, 255, 255, 0.018);
+      --surface-card: #161922;
+      --surface-card-hover: #1c212c;
+      --surface-card-selected: #182232;
+      --surface-header: #141720;
+      --surface-drawer: #13161f;
+      --surface-code: #0b0d12;
       
-      --border-card: #2e3440;
-      --border-card-hover: #434c5e;
-      --border-selected: #06b6d4;
-      --border-head: #10b981;
       --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --border-card-hover: rgba(255, 255, 255, 0.18);
+      --border-selected: #0ea5e9;
+      --border-head: #10b981;
 
-      --wire-master: #06b6d4;
+      --wire-master: #0ea5e9;
       --wire-feature: #f97316;
       --wire-merge: #10b981;
-      --wire-violet: #a855f7;
+      --wire-violet: #8b5cf6;
 
-      --ink-primary: #f8fafc;
+      --ink-primary: #f1f5f9;
       --ink-secondary: #94a3b8;
       --ink-muted: #64748b;
       --ink-accent: #38bdf8;
@@ -34,8 +34,8 @@
       --ink-orange: #fb923c;
       --ink-red: #f87171;
 
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Consolas, Menlo, Monaco, monospace;
     }
 
     * {
@@ -63,44 +63,42 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 56px;
+      height: 46px;
       background: var(--surface-header);
-      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 14px;
       z-index: 100;
     }
 
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
-      border-radius: 8px;
+      width: 26px;
+      height: 26px;
+      background: #ea4b71;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
     }
 
     .brand-logo svg {
-      width: 18px;
-      height: 18px;
+      width: 15px;
+      height: 15px;
       fill: #ffffff;
     }
 
     .brand-title {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       color: var(--ink-primary);
     }
 
@@ -108,10 +106,11 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      background: #161a23;
+      padding: 0 8px;
+      height: 26px;
+      border-radius: 5px;
+      font-size: 11px;
       color: var(--ink-secondary);
       font-family: var(--font-mono);
       border: 1px solid var(--border-subtle);
@@ -121,72 +120,54 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0 8px;
+      height: 26px;
+      border-radius: 5px;
+      font-size: 11.5px;
       color: var(--ink-green);
-      font-weight: 600;
+      font-weight: 500;
+      font-family: var(--font-mono);
     }
 
     .head-badge .pulse-dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       background: #10b981;
       border-radius: 50%;
-      box-shadow: 0 0 8px #10b981;
-      animation: pulse 2s infinite ease-in-out;
-    }
-
-    .zero-server-chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--ink-accent);
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.8); }
     }
 
     /* Header Controls */
     .controls-section {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .search-box {
       display: flex;
       align-items: center;
-      background: rgba(0, 0, 0, 0.35);
+      background: #11141b;
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 0 10px;
-      height: 32px;
-      width: 200px;
-      transition: all 0.2s;
+      border-radius: 5px;
+      padding: 0 8px;
+      height: 28px;
+      width: 190px;
+      transition: width 0.15s ease, border-color 0.15s ease;
     }
 
     .search-box:focus-within {
-      width: 260px;
+      width: 250px;
       border-color: var(--border-selected);
-      box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
     }
 
     .search-box svg {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       fill: var(--ink-muted);
       margin-right: 6px;
+      flex-shrink: 0;
     }
 
     .search-box input {
@@ -194,33 +175,45 @@
       border: none;
       outline: none;
       color: var(--ink-primary);
-      font-size: 12px;
+      font-size: 11.5px;
       width: 100%;
     }
 
+    .search-box input::placeholder {
+      color: var(--ink-muted);
+    }
+
     .btn {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 6px;
-      height: 32px;
-      padding: 0 12px;
-      background: rgba(255, 255, 255, 0.08);
+      justify-content: center;
+      gap: 5px;
+      height: 28px;
+      padding: 0 10px;
+      background: #181c25;
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
+      border-radius: 5px;
       color: var(--ink-primary);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
     }
 
     .btn:hover {
-      background: rgba(255, 255, 255, 0.14);
-      border-color: rgba(255, 255, 255, 0.2);
+      background: #202632;
+      border-color: rgba(255, 255, 255, 0.18);
     }
 
     .btn:active {
-      transform: scale(0.97);
+      transform: translateY(1px);
+    }
+
+    .btn svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
     }
 
     .btn-primary {
@@ -231,45 +224,99 @@
 
     .btn-primary:hover {
       background: #0369a1;
+      border-color: #7dd3fc;
+    }
+
+    .btn-save {
+      background: #059669;
+      border-color: #10b981;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .btn-save:hover {
+      background: #047857;
+      border-color: #34d399;
+    }
+
+    .btn-sync {
+      background: #0284c7;
+      border-color: #0ea5e9;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .btn-sync:hover {
+      background: #0369a1;
+      border-color: #38bdf8;
+    }
+
+    .btn-rollback {
+      background: #b91c1c;
+      border-color: #ef4444;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .btn-rollback:hover {
+      background: #991b1b;
+      border-color: #f87171;
+    }
+
+    .kbd-hint {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      font-family: var(--font-mono);
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      padding: 0 4px;
+      margin-left: 4px;
+      line-height: 14px;
     }
 
     /* Desktop App Controls */
     .project-picker-wrap {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(0, 0, 0, 0.45);
+      gap: 5px;
+      background: #141822;
       border: 1px solid var(--border-subtle);
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 0 6px;
+      height: 28px;
+      border-radius: 5px;
     }
 
     .project-select {
       background: transparent;
       border: none;
       color: var(--ink-primary);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       font-family: var(--font-sans);
       outline: none;
       cursor: pointer;
-      max-width: 150px;
+      max-width: 145px;
     }
 
     .project-select option {
-      background: #1e222a;
+      background: #181c25;
       color: #f8fafc;
     }
 
     .remote-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 11.5px;
+      gap: 5px;
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(14, 165, 233, 0.25);
+      padding: 0 8px;
+      height: 26px;
+      border-radius: 5px;
+      font-size: 11px;
       color: var(--ink-accent);
       font-family: var(--font-mono);
       max-width: 200px;
@@ -278,61 +325,23 @@
       white-space: nowrap;
     }
 
-    .btn-save {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      border-color: #34d399;
-      color: #ffffff;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-    }
-
-    .btn-save:hover {
-      background: linear-gradient(135deg, #047857 0%, #059669 100%);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-    }
-
-    .btn-sync {
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-      border-color: #38bdf8;
-      color: #ffffff;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
-    }
-
-    .btn-sync:hover {
-      background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
-      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
-    }
-
-    .btn-rollback {
-      background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
-      border-color: #f87171;
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .btn-rollback:hover {
-      background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%);
-    }
-
     .toast-banner {
       position: fixed;
-      top: 66px;
+      top: 56px;
       left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(20, 24, 33, 0.96);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 10px 20px;
-      border-radius: 8px;
+      transform: translateX(-50%) translateY(-10px);
+      background: #161922;
+      border: 1px solid var(--border-subtle);
+      padding: 8px 16px;
+      border-radius: 6px;
       color: #f8fafc;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       z-index: 9999;
       opacity: 0;
       pointer-events: none;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     }
 
     .toast-banner.show {
@@ -352,44 +361,44 @@
     }
 
     .toast-banner.info {
-      border-color: #38bdf8;
+      border-color: #0ea5e9;
       color: #38bdf8;
     }
 
-    /* Cloud Update Alert Banner (Smooth Floating Handshake) */
+    /* Cloud Update Alert Banner (Clean Linear style) */
     .cloud-update-banner {
       position: fixed;
-      top: 68px;
+      top: 56px;
       left: 50%;
       transform: translateX(-50%);
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.96) 100%);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(56, 189, 248, 0.4);
-      padding: 10px 18px;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.2);
+      background: #161922;
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      padding: 8px 14px;
+      border-radius: 7px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
       z-index: 9998;
-      animation: bannerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: bannerSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     @keyframes bannerSlideDown {
-      from { opacity: 0; transform: translateX(-50%) translateY(-15px); }
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
     .cloud-icon-pulse {
-      font-size: 20px;
-      animation: pulse 2s infinite ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
     }
 
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.7);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -397,36 +406,40 @@
     }
 
     .modal-box {
-      background: #1a1e27;
-      border: 1px solid #333d4d;
-      border-radius: 12px;
-      padding: 24px;
+      background: #161922;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 20px;
       width: 440px;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
     }
 
     .modal-title {
-      font-size: 16px;
-      font-weight: 700;
+      font-size: 14.5px;
+      font-weight: 600;
       color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .modal-input {
       width: 100%;
-      background: #11141a;
-      border: 1px solid #333d4d;
-      border-radius: 6px;
-      padding: 10px 12px;
-      font-size: 13px;
+      background: #0f1117;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 12px;
       color: #f8fafc;
       outline: none;
       margin-top: 4px;
       box-sizing: border-box;
+      font-family: var(--font-sans);
     }
 
     .modal-input:focus {
-      border-color: #10b981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 1px #0ea5e9;
     }
 
     /* Projects Hub Modal Styling */
@@ -520,7 +533,7 @@
     /* Canvas Area */
     .canvas-container {
       position: absolute;
-      top: 56px;
+      top: 46px;
       bottom: 0;
       left: 0;
       right: 0;
@@ -560,7 +573,7 @@
 
     .cable-path {
       fill: none;
-      stroke-width: 2.8px;
+      stroke-width: 2.2px;
       stroke-linecap: round;
       stroke-linejoin: round;
       transition: stroke 0.15s, stroke-width 0.15s;
@@ -568,52 +581,52 @@
 
     .cable-path.normal {
       stroke: var(--wire-master);
-      opacity: 0.9;
+      opacity: 0.85;
     }
 
     .cable-path.branch_out {
       stroke: var(--wire-feature);
-      stroke-dasharray: 7 4;
+      stroke-dasharray: 6 3;
     }
 
     .cable-path.merge {
       stroke: #10b981;
-      stroke-width: 3.2px;
+      stroke-width: 2.5px;
     }
 
     .cable-path.master-trunk {
-      stroke: #06b6d4;
-      stroke-width: 3.2px;
+      stroke: #0ea5e9;
+      stroke-width: 2.6px;
     }
 
     .cable-path.wip {
       stroke: #f59e0b;
-      stroke-width: 2.8px;
-      stroke-dasharray: 6 4;
+      stroke-width: 2.2px;
+      stroke-dasharray: 5 3;
       animation: dashMove 1.5s linear infinite;
     }
 
     @keyframes dashMove {
-      from { stroke-dashoffset: 20; }
+      from { stroke-dashoffset: 16; }
       to { stroke-dashoffset: 0; }
     }
 
     .cable-pill {
       font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 700;
-      fill: #ffffff;
+      font-size: 9.5px;
+      font-weight: 600;
+      fill: #e2e8f0;
       text-anchor: middle;
       dominant-baseline: central;
       pointer-events: auto;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.01em;
     }
 
     .cable-pill-bg {
-      fill: #14171f;
-      stroke-width: 1.5px;
-      rx: 6px;
-      ry: 6px;
+      fill: #12151d;
+      stroke-width: 1px;
+      rx: 4px;
+      ry: 4px;
       pointer-events: auto;
     }
 
@@ -631,77 +644,71 @@
     /* n8n Node Card */
     .n8n-node {
       position: absolute;
-      width: 300px;
-      height: 88px;
-      background: #181b22;
-      border: 1.5px solid #2e3440;
-      border-radius: 10px;
+      width: 290px;
+      height: 76px;
+      background: #151821;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       padding: 8px 12px;
       gap: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
       cursor: pointer;
       pointer-events: auto;
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;
+      transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.16s, background 0.16s, box-shadow 0.16s;
       box-sizing: border-box;
       overflow: hidden;
       will-change: transform;
     }
 
     .n8n-node:hover {
-      transform: translateY(-3px) scale(1.01);
-      background: #20242e;
-      border-color: #4c566a;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+      transform: translateY(-2px);
+      background: #1c212c;
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
     }
 
     .n8n-node.selected {
-      border-color: #06b6d4;
-      border-width: 2px;
-      box-shadow: 0 0 0 1px #06b6d4, 0 6px 18px rgba(0, 0, 0, 0.5);
-      background: #1b212c;
+      border: 1.5px solid #0ea5e9;
+      box-shadow: 0 0 0 1px #0ea5e9, 0 4px 12px rgba(0, 0, 0, 0.45);
+      background: #182232;
     }
 
     .n8n-node.node-head {
-      border-color: #10b981;
-      border-width: 2px;
-      box-shadow: 0 0 0 1px #10b981, 0 6px 18px rgba(0, 0, 0, 0.5);
+      border: 1.5px solid #10b981;
+      box-shadow: 0 0 0 1px #10b981, 0 4px 12px rgba(0, 0, 0, 0.45);
     }
 
     .n8n-node.node-wip {
-      border-color: #f59e0b;
-      border-style: dashed;
-      border-width: 2px;
-      box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35), 0 6px 18px rgba(0, 0, 0, 0.5);
-      background: #1f1a14;
+      border: 1.5px dashed #f59e0b;
+      background: #1a1711;
     }
 
     .n8n-node.node-wip:hover {
       border-color: #fbbf24;
-      background: #282117;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4), 0 8px 22px rgba(0, 0, 0, 0.6);
+      background: #231f17;
     }
 
     /* Ports */
     .node-port {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: var(--bg-canvas);
-      border: 2px solid #64748b;
+      border: 1.5px solid #64748b;
       top: 50%;
       transform: translateY(-50%);
       z-index: 5;
     }
 
     .node-port.port-in {
-      left: -6px;
+      left: -5px;
     }
 
     .node-port.port-out {
-      right: -6px;
+      right: -5px;
       border-color: var(--border-selected);
       background: var(--surface-card);
     }
@@ -712,10 +719,10 @@
 
     /* Node Icon Box */
     .node-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: #161920;
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      background: #10131a;
       border: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       align-items: center;
@@ -725,21 +732,21 @@
     }
 
     .node-icon-box svg {
-      width: 22px;
-      height: 22px;
+      width: 18px;
+      height: 18px;
     }
 
     .node-status-badge {
       position: absolute;
-      bottom: -3px;
-      right: -3px;
-      width: 16px;
-      height: 16px;
+      bottom: -2px;
+      right: -2px;
+      width: 13px;
+      height: 13px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 8px;
       border: 1.5px solid var(--surface-card);
     }
 
@@ -755,7 +762,7 @@
     }
 
     .status-merge {
-      background: #a855f7;
+      background: #8b5cf6;
       color: #ffffff;
     }
 
@@ -777,7 +784,7 @@
     }
 
     .node-title {
-      font-size: 12.5px;
+      font-size: 12px;
       font-weight: 600;
       color: #ffffff;
       white-space: nowrap;
@@ -788,8 +795,8 @@
     }
 
     .node-subtitle {
-      font-size: 10.5px;
-      color: #94a3b8;
+      font-size: 10px;
+      color: #64748b;
       font-family: var(--font-mono);
       display: flex;
       align-items: center;
@@ -802,7 +809,7 @@
 
     .node-branches {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       margin-top: 2px;
       align-items: center;
       flex-wrap: nowrap;
@@ -811,41 +818,35 @@
     }
 
     .branch-pill {
-      font-size: 9px;
+      font-size: 8.5px;
       font-weight: 600;
-      padding: 1.5px 6px;
-      border-radius: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
       font-family: var(--font-mono);
       white-space: nowrap;
       text-overflow: ellipsis;
-      max-width: 110px;
+      max-width: 100px;
       overflow: hidden;
       border: 1px solid;
       cursor: help;
       flex-shrink: 1;
-      line-height: 1.25;
-      transition: all 0.15s ease;
+      line-height: 1.2;
+      transition: all 0.12s ease;
     }
 
     .branch-pill:hover {
-      filter: brightness(1.25);
+      filter: brightness(1.2);
     }
 
     .branch-pill.pill-more {
       background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.2);
       color: #94a3b8;
-      font-weight: 700;
-      padding: 1.5px 5px;
+      font-weight: 600;
+      padding: 1px 4px;
       flex-shrink: 0;
       max-width: none;
       cursor: pointer;
-    }
-
-    .branch-pill.pill-more:hover {
-      background: rgba(255, 255, 255, 0.18);
-      color: #38bdf8;
-      border-color: #38bdf8;
     }
 
     #drawer-branch-tags {
@@ -862,93 +863,93 @@
     }
 
     .pill-master {
-      background: rgba(6, 182, 212, 0.15);
-      border: 1px solid rgba(6, 182, 212, 0.4);
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.35);
       color: #38bdf8;
     }
 
     .pill-feature {
-      background: rgba(249, 115, 22, 0.15);
-      border: 1px solid rgba(249, 115, 22, 0.4);
+      background: rgba(249, 115, 22, 0.12);
+      border: 1px solid rgba(249, 115, 22, 0.35);
       color: #fb923c;
     }
 
     .pill-head {
-      background: rgba(16, 185, 129, 0.18);
-      border: 1px solid rgba(16, 185, 129, 0.5);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.4);
       color: #34d399;
     }
 
     .pill-wip {
-      background: rgba(245, 158, 11, 0.18);
-      border: 1px solid rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.4);
       color: #fbbf24;
     }
 
     /* HUD Controls (Bottom-Left) */
     .hud-toolbar {
       position: fixed;
-      bottom: 20px;
-      left: 20px;
+      bottom: 14px;
+      left: 14px;
       background: var(--surface-header);
-      backdrop-filter: blur(12px);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
-      padding: 4px;
-      gap: 4px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      padding: 2px;
+      gap: 2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       z-index: 100;
     }
 
     .hud-btn {
-      width: 32px;
-      height: 32px;
+      width: 26px;
+      height: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: transparent;
       border: none;
       color: var(--ink-secondary);
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.15s;
+      font-size: 11.5px;
+      font-family: var(--font-mono);
+      transition: background 0.15s;
     }
 
     .hud-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       color: var(--ink-primary);
     }
 
     .hud-divider {
       width: 1px;
-      height: 18px;
+      height: 14px;
       background: var(--border-subtle);
       margin: 0 2px;
     }
 
     .zoom-label {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--ink-muted);
-      padding: 0 6px;
-      min-width: 44px;
+      padding: 0 5px;
+      min-width: 38px;
       text-align: center;
     }
 
     /* Side Drawer (Commit Inspector) */
     .side-drawer {
       position: fixed;
-      top: 56px;
+      top: 46px;
       right: -520px;
-      width: 500px;
+      width: 480px;
       bottom: 0;
       background: var(--surface-drawer);
       border-left: 1px solid var(--border-subtle);
-      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.65);
-      transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5);
+      transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 150;
       display: flex;
       flex-direction: column;
@@ -960,13 +961,15 @@
     }
 
     .drawer-header {
-      padding: 16px 20px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       flex-shrink: 0;
+      height: 46px;
+      box-sizing: border-box;
     }
 
     .drawer-title-group {
@@ -1034,18 +1037,18 @@
 
     .drawer-meta-grid {
       display: grid;
-      grid-template-columns: 80px 1fr;
-      gap: 8px 12px;
-      font-size: 12.5px;
-      background: rgba(0, 0, 0, 0.25);
-      padding: 12px 14px;
-      border-radius: 8px;
+      grid-template-columns: 70px 1fr;
+      gap: 6px 10px;
+      font-size: 11.5px;
+      background: #0f1219;
+      padding: 10px 12px;
+      border-radius: 6px;
       border: 1px solid var(--border-subtle);
     }
 
     .meta-label {
       color: var(--ink-muted);
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .meta-value {
@@ -1055,32 +1058,32 @@
     }
 
     .commit-message-box {
-      background: #111317;
+      background: #0d0f15;
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 14px 16px;
-      font-size: 13.5px;
-      line-height: 1.55;
-      color: #f1f5f9;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #e2e8f0;
       white-space: pre-wrap;
       font-family: var(--font-mono);
       border-left: 3px solid var(--border-selected);
     }
 
     .diff-section-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--ink-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
     }
 
     .files-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      height: 280px;
-      max-height: 280px;
+      gap: 4px;
+      height: 240px;
+      max-height: 240px;
       overflow-y: auto;
       padding-right: 4px;
       flex-shrink: 0;
@@ -1089,34 +1092,33 @@
     .file-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 12.5px;
+      gap: 8px;
+      font-size: 11.5px;
       font-family: var(--font-mono);
-      padding: 7px 12px;
-      background: #11141a;
-      border-radius: 6px;
+      padding: 5px 10px;
+      background: #0f1219;
+      border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: background 0.12s, border-color 0.12s;
     }
 
     .file-item:hover {
-      background: #1b2029;
-      border-color: rgba(6, 182, 212, 0.4);
-      transform: translateX(2px);
+      background: #181d27;
+      border-color: rgba(14, 165, 233, 0.3);
     }
 
     .file-badge {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 1px 5px;
+      border-radius: 3px;
     }
 
-    .file-badge.M { background: rgba(234, 179, 8, 0.25); color: #facc15; }
-    .file-badge.A { background: rgba(34, 197, 94, 0.25); color: #4ade80; }
-    .file-badge.D { background: rgba(239, 68, 68, 0.25); color: #f87171; }
-    .file-badge.\?\?, .file-badge.U { background: rgba(168, 85, 247, 0.25); color: #c084fc; }
+    .file-badge.M { background: rgba(234, 179, 8, 0.2); color: #facc15; }
+    .file-badge.A { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .file-badge.D { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .file-badge.\?\?, .file-badge.U { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
 
     .file-path {
       color: var(--ink-primary);
@@ -1129,16 +1131,16 @@
     .code-diff-box {
       background: var(--surface-code);
       border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 14px;
-      font-family: 'JetBrains Mono', Consolas, 'Fira Code', monospace;
-      font-size: 12.5px;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
       color: #cbd5e1;
-      height: 335px;
-      min-height: 280px;
+      height: 320px;
+      min-height: 260px;
       flex-shrink: 0;
       overflow: auto;
-      line-height: 1.6;
+      line-height: 1.5;
       white-space: pre;
     }
 
@@ -1149,46 +1151,48 @@
 
     .diff-line {
       display: block;
-      padding: 1px 8px;
+      padding: 1px 6px;
       border-radius: 2px;
     }
 
     .diff-file-header {
-      background: rgba(59, 130, 246, 0.15);
-      color: #93c5fd;
-      font-weight: 700;
-      margin-top: 16px;
-      margin-bottom: 6px;
-      padding: 6px 10px;
-      border-radius: 4px;
-      border-left: 3px solid #3b82f6;
+      background: rgba(14, 165, 233, 0.12);
+      color: #7dd3fc;
+      font-weight: 600;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      padding: 4px 8px;
+      border-radius: 3px;
+      border-left: 2px solid #0ea5e9;
+      font-size: 11px;
     }
 
     .diff-chunk-header {
-      background: rgba(6, 182, 212, 0.12);
-      color: #38bdf8;
-      font-weight: 600;
-      margin: 8px 0;
-      padding: 4px 10px;
-      border-radius: 4px;
-      border-left: 3px solid #06b6d4;
+      background: rgba(255, 255, 255, 0.04);
+      color: #94a3b8;
+      font-weight: 500;
+      margin: 6px 0;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border-left: 2px solid #64748b;
+      font-size: 11px;
     }
 
     .diff-added {
-      background: rgba(16, 185, 129, 0.14);
+      background: rgba(16, 185, 129, 0.12);
       color: #34d399;
-      border-left: 3px solid #10b981;
+      border-left: 2px solid #10b981;
     }
 
     .diff-removed {
-      background: rgba(239, 68, 68, 0.14);
+      background: rgba(239, 68, 68, 0.12);
       color: #f87171;
-      border-left: 3px solid #ef4444;
+      border-left: 2px solid #ef4444;
     }
 
     .diff-meta {
-      color: #94a3b8;
-      font-weight: 600;
+      color: #64748b;
+      font-weight: 500;
     }
 
     .diff-context {
@@ -1232,12 +1236,24 @@
       
       <!-- Project Switcher (Desktop App) -->
       <div class="project-picker-wrap" id="project-picker-wrap" style="display:none;">
-        <span style="font-size: 11px; color: var(--ink-muted); font-weight:600;">PROJECT:</span>
+        <span style="font-size: 10px; color: var(--ink-muted); font-weight:600; font-family:var(--font-mono);">REPO:</span>
         <select id="project-dropdown" class="project-select"></select>
-        <button class="btn" id="btn-open-folder" style="height:24px; padding:0 7px; font-size:11px;" title="เปิดโฟลเดอร์ใน File Explorer / Finder">📁</button>
-        <button class="btn" id="btn-open-editor" style="height:24px; padding:0 7px; font-size:11px;" title="เปิดโปรเจกต์ใน Cursor / VS Code ทันที">💻 Code</button>
-        <button class="btn" id="btn-projects-hub" style="height:24px; padding:0 8px; font-size:11px;" title="เปิด Dashboard ศูนย์รวมโปรเจกต์ทั้งหมด">📂 Hub</button>
-        <button class="btn" id="btn-add-project" style="height:24px; padding:0 8px; font-size:11px;" title="เลือกโฟลเดอร์ Git Repo อื่น">+ Add</button>
+        <button class="btn" id="btn-open-folder" style="height:22px; padding:0 6px;" title="เปิดโฟลเดอร์ใน File Explorer / Finder">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button class="btn" id="btn-open-editor" style="height:22px; padding:0 6px;" title="เปิดโปรเจกต์ใน Cursor / VS Code">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>Code</span>
+        </button>
+        <button class="btn" id="btn-projects-hub" style="height:22px; padding:0 6px;" title="เปิด Dashboard ศูนย์รวมทุกโปรเจกต์ [H]">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Hub</span>
+          <span class="kbd-hint">H</span>
+        </button>
+        <button class="btn" id="btn-add-project" style="height:22px; padding:0 6px;" title="เลือกโฟลเดอร์ Git Repo อื่น">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Add</span>
+        </button>
       </div>
 
       <div class="remote-badge" id="remote-badge" style="display:none;" title="GitHub Remote URL">
@@ -1253,27 +1269,32 @@
 
     <div class="controls-section">
       <!-- 1-Click Action Buttons -->
-      <button class="btn btn-save" id="btn-checkpoint" style="display:none;" title="บันทึก Checkpoint & Push ขึ้น GitHub ทันที">
-        💾 Save Checkpoint
+      <button class="btn btn-save" id="btn-checkpoint" style="display:none;" title="บันทึก Checkpoint & Push ขึ้น GitHub [Ctrl+S]">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        <span>Save Checkpoint</span>
+        <span class="kbd-hint" style="color:rgba(255,255,255,0.7); border-color:rgba(255,255,255,0.2);">Ctrl+S</span>
       </button>
 
       <button class="btn btn-sync" id="btn-sync-overwrite" style="display:none;" title="ดึงโค้ดล่าสุดจาก GitHub มาทับที่เครื่องนี้">
-        📥 Sync & Overwrite
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Sync & Overwrite</span>
       </button>
 
       <div class="search-box">
         <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" id="search-input" placeholder="Search commit, branch, author...">
+        <input type="text" id="search-input" placeholder="Search commits, files... (/)">
       </div>
 
-      <button class="btn" id="btn-simulate-merge" title="Show simulated merge curve into Master">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 12V4H7v8H2l10 10 10-10h-5z"/></svg>
-        Merge
+      <button class="btn" id="btn-simulate-merge" title="แสดงเส้นทางจำลองการ Merge เข้า Master [M]">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+        <span>Merge</span>
+        <span class="kbd-hint">M</span>
       </button>
 
-      <button class="btn btn-primary" id="btn-refresh" title="Reload Git Data (F5)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-        Refresh
+      <button class="btn btn-primary" id="btn-refresh" title="รีเฟรชข้อมูล Git [F5]">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        <span>Refresh</span>
+        <span class="kbd-hint" style="color:rgba(255,255,255,0.7); border-color:rgba(255,255,255,0.2);">F5</span>
       </button>
     </div>
   </header>
@@ -1286,7 +1307,7 @@
       <svg class="connections-svg" id="connections-svg" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
         <defs>
           <filter id="glow-green" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation="2" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
@@ -1304,9 +1325,9 @@
   <div class="hud-toolbar">
     <button class="hud-btn" id="hud-zoom-in" title="Zoom In (+)">+</button>
     <div class="zoom-label" id="zoom-label">100%</div>
-    <button class="hud-btn" id="hud-zoom-out" title="Zoom Out (-)">−</button>
+    <button class="hud-btn" id="hud-zoom-out" title="Zoom Out (−)">−</button>
     <div class="hud-divider"></div>
-    <button class="hud-btn" id="hud-fit" title="Fit to View (⤢)">⤢</button>
+    <button class="hud-btn" id="hud-fit" title="Fit to View">⤢</button>
     <button class="hud-btn" id="hud-reset" title="Reset Zoom (1:1)">1:1</button>
   </div>
 
@@ -1318,23 +1339,23 @@
           <span id="drawer-hash-text">89b7289</span>
           <button class="copy-btn" id="drawer-copy-btn">Copy SHA</button>
         </div>
-        <div id="drawer-branch-tags" style="display:flex; gap:4px; margin-top:4px;"></div>
+        <div id="drawer-branch-tags" style="display:flex; gap:4px; margin-top:2px;"></div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button class="drawer-close" id="drawer-close-btn" title="Close Drawer">✕</button>
+        <button class="drawer-close" id="drawer-close-btn" title="Close Drawer [Esc]">✕</button>
       </div>
     </div>
 
     <div class="drawer-content">
       <div class="drawer-meta-grid">
         <span class="meta-label">Author:</span>
-        <span class="meta-value" id="drawer-author">Sitt Chanel</span>
+        <span class="meta-value" id="drawer-author">Author</span>
 
         <span class="meta-label">Date:</span>
         <span class="meta-value" id="drawer-date">2026-09-08 09:02:52</span>
 
         <span class="meta-label">Parents:</span>
-        <span class="meta-value" id="drawer-parents">b145628</span>
+        <span class="meta-value" id="drawer-parents">Root</span>
       </div>
 
       <div class="commit-message-box" id="drawer-message">Commit Message</div>
@@ -1342,20 +1363,22 @@
       <!-- Action buttons inside Drawer -->
       <div id="drawer-action-container" style="display:flex; flex-direction:column; gap:8px;">
         <button class="btn btn-rollback" id="drawer-rollback-btn" style="width:100%; justify-content:center; display:none;" title="ย้อนโค้ดในเครื่องกลับมาจุดนี้">
-          ⏪ Rollback to this Checkpoint
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          <span id="drawer-rollback-text">Rollback to this Checkpoint</span>
         </button>
         <button class="btn btn-save" id="drawer-wip-save-btn" style="width:100%; justify-content:center; display:none;" title="บันทึกไฟล์ที่กำลังแก้ไขอยู่เป็น Checkpoint ทันที">
-          💾 Save Working Tree as Checkpoint
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>Save Working Tree as Checkpoint</span>
         </button>
       </div>
 
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <div class="diff-section-title">Modified Files</div>
-        <span id="drawer-files-count" style="font-size:11.5px; color:#64748b; font-family:var(--font-mono);"></span>
+        <span id="drawer-files-count" style="font-size:11px; color:#64748b; font-family:var(--font-mono);"></span>
       </div>
       <div class="files-list" id="drawer-files-list"></div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:4px;">
         <div class="diff-section-title">Unified Diff</div>
         <div style="display:flex; gap:6px;">
           <button class="copy-btn" id="diff-wrap-btn" title="Toggle line wrap">Wrap: Off</button>
@@ -1372,10 +1395,13 @@
   <div class="modal-overlay" id="projects-hub-modal" style="display:none;">
     <div class="modal-box" style="width: 580px;">
       <div style="display:flex; align-items:center; justify-content:space-between;">
-        <div class="modal-title">📂 Projects Control Hub</div>
+        <div class="modal-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Projects Control Hub
+        </div>
         <button class="drawer-close" id="hub-close-btn" style="width:24px; height:24px; font-size:12px;">✕</button>
       </div>
-      <p style="font-size:12px; color:#94a3b8; margin: 6px 0 12px; line-height: 1.5;">
+      <p style="font-size:11.5px; color:#94a3b8; margin: 6px 0 12px; line-height: 1.4;">
         ศูนย์รวมทุกโปรเจกต์ของคุณ พร้อมตรวจสอบสถานะการทำงาน (Sync / Uncommitted Changes) แบบ Real-time
       </p>
       
@@ -1383,39 +1409,53 @@
         <!-- Rendered dynamically -->
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:12px;">
-        <button class="btn" id="hub-add-btn" style="font-size:12px;">+ เพิ่มโปรเจกต์ใหม่ (Auto Protect .gitignore)</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <button class="btn" id="hub-add-btn" style="font-size:11.5px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          เพิ่มโปรเจกต์ใหม่
+        </button>
         <button class="btn btn-primary" id="hub-done-btn">เสร็จสิ้น</button>
       </div>
     </div>
   </div>
 
-  <!-- Cloud Update Floating Alert (Zero Friction 2-Machine Handshake) -->
+  <!-- Cloud Update Floating Alert (Clean Linear style) -->
   <div class="cloud-update-banner" id="cloud-update-banner" style="display:none;">
     <div style="display:flex; align-items:center; gap:10px;">
-      <div class="cloud-icon-pulse">☁️</div>
+      <div class="cloud-icon-pulse">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+      </div>
       <div>
-        <div style="font-weight:700; font-size:13px; color:#f8fafc;" id="cloud-banner-title">พบจุดเซฟใหม่จาก GitHub!</div>
-        <div style="font-size:11.5px; color:#94a3b8;" id="cloud-banner-subtitle">มีโค้ดใหม่ที่ทำจากอีกเครื่องหนึ่ง รอให้คุณซิงค์</div>
+        <div style="font-weight:600; font-size:12.5px; color:#f8fafc;" id="cloud-banner-title">พบจุดเซฟใหม่จาก GitHub</div>
+        <div style="font-size:11px; color:#94a3b8;" id="cloud-banner-subtitle">มีงานใหม่ที่ทำจากอีกเครื่องหนึ่ง รอให้คุณซิงค์</div>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:8px;">
-      <button class="btn btn-sync" id="btn-cloud-pull-now" style="height:28px; padding:0 12px; font-size:12px;">📥 ซิงค์ลงเครื่องนี้ทันที</button>
-      <button class="drawer-close" id="btn-cloud-dismiss" style="width:24px; height:24px; font-size:12px;">✕</button>
+      <button class="btn btn-sync" id="btn-cloud-pull-now" style="height:26px; padding:0 10px; font-size:11.5px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>ซิงค์ทันที</span>
+      </button>
+      <button class="drawer-close" id="btn-cloud-dismiss" style="width:22px; height:22px; font-size:11px;">✕</button>
     </div>
   </div>
 
   <!-- Checkpoint Modal -->
   <div class="modal-overlay" id="checkpoint-modal" style="display:none;">
     <div class="modal-box">
-      <div class="modal-title">💾 Save Checkpoint & Push</div>
-      <p style="font-size:12px; color:#94a3b8; margin: 8px 0 12px; line-height: 1.5;">
-        บันทึกจุดเซฟของโค้ดปัจจุบัน และ Push ไปยัง GitHub ทันที เพื่อให้คุณสามารถไปกดดึงที่อีกเครื่องได้
+      <div class="modal-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Checkpoint & Push
+      </div>
+      <p style="font-size:11.5px; color:#94a3b8; margin: 6px 0 10px; line-height: 1.4;">
+        บันทึกจุดเซฟของโค้ดปัจจุบัน และ Push ไปยัง GitHub ทันที เพื่อให้คุณดึงไปทำต่อที่อีกเครื่องได้
       </p>
       <input type="text" id="checkpoint-note-input" class="modal-input" placeholder="ระบุข้อความช่วยจำ (เช่น ก่อนสั่ง AI ทำระบบ Login) หรือเว้นว่างได้">
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:14px;">
         <button class="btn" id="modal-cancel-btn">ยกเลิก</button>
-        <button class="btn btn-save" id="modal-confirm-btn">บันทึก & Push</button>
+        <button class="btn btn-save" id="modal-confirm-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          บันทึก & Push
+        </button>
       </div>
     </div>
   </div>
@@ -1929,7 +1969,7 @@
         } else {
           rollbackBtn.style.display = 'flex';
           const shortHash = node.short_id || (node.id ? node.id.substring(0, 7) : 'commit');
-          rollbackBtn.textContent = `⏪ Rollback to Checkpoint [${shortHash}]`;
+          rollbackBtn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg><span>Rollback to [${shortHash}]</span>`;
           wipSaveBtn.style.display = 'none';
         }
       }
@@ -1968,7 +2008,7 @@
             if (matched) {
               matched.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else if (window.electronAPI && window.electronAPI.getFileDiff && f.path) {
-              diffOutput.innerHTML = `<div class="diff-line diff-meta" style="padding:16px;">⏳ กำลังโหลด diff ของ ${f.path}...</div>`;
+              diffOutput.innerHTML = `<div class="diff-line diff-meta" style="padding:16px;">กำลังโหลด diff ของ ${f.path}...</div>`;
               const fileDiffRes = await window.electronAPI.getFileDiff(node.id, f.path);
               if (fileDiffRes.ok) {
                 diffOutput.innerHTML = formatUnifiedDiff(fileDiffRes.diff);
@@ -1994,9 +2034,9 @@
         const line = lines[i];
         const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         if (line.startsWith('diff --git')) {
-          out += `<div class="diff-line diff-file-header">📄 ${escaped}</div>`;
+          out += `<div class="diff-line diff-file-header">${escaped}</div>`;
         } else if (line.startsWith('=== Untracked')) {
-          out += `<div class="diff-line diff-file-header" style="color:#fbbf24; border-top: 1px dashed rgba(245,158,11,0.4); margin-top:16px;">📁 ${escaped}</div>`;
+          out += `<div class="diff-line diff-file-header" style="color:#fbbf24; border-top: 1px dashed rgba(245,158,11,0.4); margin-top:14px;">${escaped}</div>`;
         } else if (line.startsWith('@@')) {
           out += `<div class="diff-line diff-chunk-header">${escaped}</div>`;
         } else if (line.startsWith('+') && !line.startsWith('+++')) {
@@ -2220,25 +2260,25 @@
 
           let statusTag = '';
           if (st.isDirty) {
-            statusTag = `<span class="project-status-tag status-dirty">🟠 ${st.dirtyCount} files uncommitted</span>`;
+            statusTag = `<span class="project-status-tag status-dirty"><span style="width:5px; height:5px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>${st.dirtyCount} uncommitted</span>`;
           } else if (st.hasRemote) {
-            statusTag = `<span class="project-status-tag status-synced">🟢 Synced (${st.branch || 'main'})</span>`;
+            statusTag = `<span class="project-status-tag status-synced"><span style="width:5px; height:5px; border-radius:50%; background:#10b981; display:inline-block;"></span>Synced (${st.branch || 'main'})</span>`;
           } else {
-            statusTag = `<span class="project-status-tag status-local">⚪ Local Only</span>`;
+            statusTag = `<span class="project-status-tag status-local"><span style="width:5px; height:5px; border-radius:50%; background:#64748b; display:inline-block;"></span>Local</span>`;
           }
 
           item.innerHTML = `
             <div class="project-info">
               <div class="project-card-title">
-                ${p.path === cfg.activePath ? '<span style="color:#06b6d4;">▶</span>' : ''}
+                ${p.path === cfg.activePath ? '<span style="color:#0ea5e9; font-size:10px;">●</span>' : ''}
                 ${p.name}
               </div>
               <div class="project-card-path">${p.path}</div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:5px;">
               ${statusTag}
-              <button class="btn btn-card-action" data-path="${p.path}" data-action="folder" style="height:24px; padding:0 6px; font-size:11px;" title="เปิดโฟลเดอร์">📁</button>
-              <button class="btn btn-card-action" data-path="${p.path}" data-action="editor" style="height:24px; padding:0 6px; font-size:11px;" title="เปิดใน Cursor / VS Code">💻</button>
+              <button class="btn btn-card-action" data-path="${p.path}" data-action="folder" style="height:22px; padding:0 6px;" title="เปิดโฟลเดอร์"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></button>
+              <button class="btn btn-card-action" data-path="${p.path}" data-action="editor" style="height:22px; padding:0 6px;" title="เปิดใน Cursor / VS Code"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
             </div>
           `;
 
@@ -2287,7 +2327,7 @@
             showToast('กำลังเปิดใน Code Editor...', 'info', 2000);
             const res = await window.electronAPI.openEditor(cfg.activePath);
             if (res.ok) {
-              showToast(`เปิดด้วย ${res.app} สำเร็จ! ✨`, 'success', 2500);
+              showToast(`เปิดด้วย ${res.app} สำเร็จ`, 'success', 2500);
             }
           }
         };
@@ -2303,7 +2343,7 @@
             renderGraph(res.dagData);
           }
           await renderProjectsHub();
-          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ!', 'success');
+          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ', 'success');
         } else {
           showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
         }
@@ -2319,7 +2359,7 @@
             state.dagData = res.dagData;
             renderGraph(res.dagData);
           }
-          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ!', 'success');
+          showToast('เพิ่มโปรเจกต์และตั้งค่า .gitignore สำเร็จ', 'success');
         } else {
           showToast(res.error || 'ไม่สามารถเพิ่มโปรเจกต์ได้', 'error');
         }
@@ -2332,7 +2372,7 @@
       modalConfirmBtn.onclick = async () => {
         const note = noteInput.value.trim();
         closeCheckpointModal();
-        showToast('⏳ กำลังบันทึก Checkpoint และ Push ไปยัง GitHub...', 'info', 10000);
+        showToast('กำลังบันทึก Checkpoint และ Push ไปยัง GitHub...', 'info', 10000);
 
         const res = await window.electronAPI.saveCheckpoint(note);
         if (res.ok) {
@@ -2349,10 +2389,10 @@
 
       // Sync & Overwrite
       btnSyncOverwrite.onclick = async () => {
-        const confirmed = confirm('⚠️ คำเตือน:\n\nคุณต้องการดึงข้อมูลล่าสุดจาก GitHub มา "ทับ" โค้ดในเครื่องนี้ทันทีหรือไม่?\n(เหมาะสำหรับการย้ายมาทำต่อที่เครื่องนี้)');
+        const confirmed = confirm('คำเตือน:\n\nคุณต้องการดึงข้อมูลล่าสุดจาก GitHub มา "ทับ" โค้ดในเครื่องนี้ทันทีหรือไม่?\n(เหมาะสำหรับการย้ายมาทำต่อที่เครื่องนี้)');
         if (!confirmed) return;
 
-        showToast('⏳ กำลังดึงข้อมูลล่าสุดจาก GitHub...', 'info', 10000);
+        showToast('กำลังดึงข้อมูลล่าสุดจาก GitHub...', 'info', 10000);
         const res = await window.electronAPI.syncOverwrite();
         if (res.ok) {
           showToast(res.message, 'success', 5000);
@@ -2427,7 +2467,7 @@
         try {
           const res = await window.electronAPI.checkCloudUpdates();
           if (res.ok && res.hasUpdates && res.behindCount > 0) {
-            cloudTitle.textContent = `พบ ${res.behindCount} จุดเซฟใหม่บน GitHub! ☁️`;
+            cloudTitle.textContent = `พบ ${res.behindCount} จุดเซฟใหม่บน GitHub`;
             cloudSubtitle.textContent = res.lastCommitInfo ? `ล่าสุด: ${res.lastCommitInfo}` : `มีงานใหม่ที่ทำจากอีกเครื่องหนึ่ง`;
             cloudBanner.style.display = 'flex';
           } else {
@@ -2474,10 +2514,39 @@
     // Simulate Merge Toggle
     btnSimulateMerge.onclick = () => {
       state.showSimulatedMerge = !state.showSimulatedMerge;
-      btnSimulateMerge.style.background = state.showSimulatedMerge ? 'rgba(16, 185, 129, 0.25)' : '';
+      btnSimulateMerge.style.background = state.showSimulatedMerge ? 'rgba(16, 185, 129, 0.2)' : '';
       btnSimulateMerge.style.borderColor = state.showSimulatedMerge ? '#10b981' : '';
       if (state.dagData) renderGraph(state.dagData);
     };
+
+    // Global Pro Developer Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      const activeEl = document.activeElement;
+      const isInput = activeEl && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName);
+
+      if (e.key === 'Escape') {
+        const cpModal = document.getElementById('checkpoint-modal');
+        const hubModal = document.getElementById('projects-hub-modal');
+        if (cpModal && cpModal.style.display !== 'none') closeCheckpointModal();
+        else if (hubModal && hubModal.style.display !== 'none') hubModal.style.display = 'none';
+        else if (sideDrawer.classList.contains('open')) sideDrawer.classList.remove('open');
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        const btnSave = document.getElementById('btn-checkpoint');
+        if (btnSave && btnSave.style.display !== 'none') btnSave.click();
+      } else if (!isInput) {
+        if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key === 'k')) {
+          e.preventDefault();
+          searchInput.focus();
+          searchInput.select();
+        } else if (e.key === 'm' || e.key === 'M') {
+          btnSimulateMerge.click();
+        } else if (e.key === 'h' || e.key === 'H') {
+          const btnHub = document.getElementById('btn-projects-hub');
+          if (btnHub && btnHub.style.display !== 'none') btnHub.click();
+        }
+      }
+    });
 
     // Initialize on page load
     initDAG();
