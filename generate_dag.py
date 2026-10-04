@@ -508,7 +508,7 @@ def generate():
                 "svg_path": svg_path
             })
 
-    # 10. Extract diffs
+    # 10. Extract diffs (Optimized: file lists and headers only, fast & lightweight)
     diffs = {}
     for c in sorted_commits:
         stat_raw = run_git(["diff-tree", "--root", "--no-commit-id", "--name-status", "-r", c])
@@ -519,10 +519,11 @@ def generate():
             parts = line.split("\t")
             files.append({"status": parts[0].strip(), "path": parts[1].strip() if len(parts) > 1 else ""})
 
-        full_diff = run_git(["show", "--stat", "--patch", "--format=fuller", c])
+        # Fast header summary without rendering massive binary diffs
+        header_summary = run_git(["show", "-s", "--format=fuller", c])
         diffs[c] = {
             "files": files,
-            "full_output": full_diff[:100000]
+            "full_output": header_summary
         }
 
     # WIP Diff
@@ -533,7 +534,7 @@ def generate():
             filepath = line[2:].strip()
             wip_files.append({"status": status_code, "path": filepath})
 
-        raw_diff = run_git(["diff", "HEAD"])
+        raw_diff = run_git(["diff", "--stat", "HEAD"])
         untracked = [l[2:].strip() for l in dirty_lines if l.startswith("??")]
         untracked_block = ""
         if untracked:

@@ -1780,12 +1780,18 @@
           item.appendChild(badgeSpan);
           item.appendChild(pathSpan);
 
-          item.onclick = () => {
+          item.onclick = async () => {
             const cleanPath = (f.path || '').split('/').pop();
             const headers = Array.from(diffOutput.querySelectorAll('.diff-file-header'));
             const matched = headers.find(el => el.textContent.includes(cleanPath) || el.textContent.includes(f.path));
             if (matched) {
               matched.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (window.electronAPI && window.electronAPI.getFileDiff && f.path) {
+              diffOutput.innerHTML = `<div class="diff-line diff-meta" style="padding:16px;">⏳ กำลังโหลด diff ของ ${f.path}...</div>`;
+              const fileDiffRes = await window.electronAPI.getFileDiff(node.id, f.path);
+              if (fileDiffRes.ok) {
+                diffOutput.innerHTML = formatUnifiedDiff(fileDiffRes.diff);
+              }
             }
           };
           filesList.appendChild(item);

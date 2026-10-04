@@ -139,8 +139,10 @@ function watchRepo(repoPath) {
         filename.includes('node_modules') ||
         filename.includes('.git\\objects') ||
         filename.includes('.git/objects') ||
+        filename.includes('.git\\index.lock') ||
         filename.includes('git_data.js') ||
-        filename.endsWith('.tmp')
+        filename.endsWith('.tmp') ||
+        filename.endsWith('.log')
       ) {
         return;
       }
@@ -151,7 +153,7 @@ function watchRepo(repoPath) {
         if (res.ok && mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('dag:updated', res.data);
         }
-      }, 1000);
+      }, 1500);
     });
   } catch (err) {
     console.warn('Watch repo failed:', err.message);
@@ -481,5 +483,19 @@ ipcMain.handle('git:publishToGitHub', async (_event, isPrivate = true) => {
       }
     );
   });
+});
+
+ipcMain.handle('git:getFileDiff', async (_event, commitHash, filePath) => {
+  const cfg = loadConfig();
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) return { ok: false, error: 'No active repo' };
+
+  if (commitHash === 'active-wip' || commitHash === 'working-directory-wip') {
+    const res = await runGit(['diff', 'HEAD', '--', filePath], repo);
+    return { ok: true, diff: res.stdout || 'No changes in this file.' };
+  } else {
+    const res = await runGit(['show', commitHash, '--', filePath], repo);
+    return { ok: true, diff: res.stdout || 'No changes in this file.' };
+  }
 });
 
