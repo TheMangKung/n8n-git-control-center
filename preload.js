@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   refreshDag: () => ipcRenderer.invoke('git:refreshDag'),
   publishToGitHub: (isPrivate) => ipcRenderer.invoke('git:publishToGitHub', isPrivate),
   getFileDiff: (commitHash, filePath) => ipcRenderer.invoke('git:getFileDiff', commitHash, filePath),
+  openFolder: (targetPath) => ipcRenderer.invoke('app:openFolder', targetPath),
+  openEditor: (targetPath) => ipcRenderer.invoke('app:openEditor', targetPath),
 
   // Events from Main Process
   onDagUpdated: (callback) => {

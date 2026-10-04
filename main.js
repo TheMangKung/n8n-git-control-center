@@ -562,3 +562,41 @@ ipcMain.handle('git:getFileDiff', async (_event, commitHash, filePath) => {
   }
 });
 
+// -------------------------------------------------------------
+// Quick Launch Helpers (Open Folder & Open in Code/Cursor)
+// -------------------------------------------------------------
+ipcMain.handle('app:openFolder', async (_event, targetPath) => {
+  const p = targetPath || loadConfig().activePath;
+  if (!p || !fs.existsSync(p)) return { ok: false, error: 'Directory does not exist' };
+  try {
+    await shell.openPath(p);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle('app:openEditor', async (_event, targetPath) => {
+  const p = targetPath || loadConfig().activePath;
+  if (!p || !fs.existsSync(p)) return { ok: false, error: 'Directory does not exist' };
+
+  // Detect whether Cursor or VS Code is available
+  const { exec } = require('child_process');
+  return new Promise((resolve) => {
+    // Try Cursor first, then code
+    exec(`cursor "${p}"`, (cursorErr) => {
+      if (!cursorErr) {
+        return resolve({ ok: true, app: 'Cursor' });
+      }
+      exec(`code "${p}"`, (codeErr) => {
+        if (!codeErr) {
+          return resolve({ ok: true, app: 'VS Code' });
+        }
+        // Fallback open folder if neither works
+        shell.openPath(p);
+        resolve({ ok: true, app: 'Explorer' });
+      });
+    });
+  });
+});
+

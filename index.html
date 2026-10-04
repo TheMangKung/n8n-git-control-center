@@ -1203,6 +1203,8 @@
       <div class="project-picker-wrap" id="project-picker-wrap" style="display:none;">
         <span style="font-size: 11px; color: var(--ink-muted); font-weight:600;">PROJECT:</span>
         <select id="project-dropdown" class="project-select"></select>
+        <button class="btn" id="btn-open-folder" style="height:24px; padding:0 7px; font-size:11px;" title="เปิดโฟลเดอร์ใน File Explorer / Finder">📁</button>
+        <button class="btn" id="btn-open-editor" style="height:24px; padding:0 7px; font-size:11px;" title="เปิดโปรเจกต์ใน Cursor / VS Code ทันที">💻 Code</button>
         <button class="btn" id="btn-projects-hub" style="height:24px; padding:0 8px; font-size:11px;" title="เปิด Dashboard ศูนย์รวมโปรเจกต์ทั้งหมด">📂 Hub</button>
         <button class="btn" id="btn-add-project" style="height:24px; padding:0 8px; font-size:11px;" title="เลือกโฟลเดอร์ Git Repo อื่น">+ Add</button>
       </div>
@@ -2182,12 +2184,27 @@
               </div>
               <div class="project-card-path">${p.path}</div>
             </div>
-            <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:6px;">
               ${statusTag}
+              <button class="btn btn-card-action" data-path="${p.path}" data-action="folder" style="height:24px; padding:0 6px; font-size:11px;" title="เปิดโฟลเดอร์">📁</button>
+              <button class="btn btn-card-action" data-path="${p.path}" data-action="editor" style="height:24px; padding:0 6px; font-size:11px;" title="เปิดใน Cursor / VS Code">💻</button>
             </div>
           `;
 
-          item.onclick = async () => {
+          item.onclick = async (e) => {
+            if (e.target.closest('.btn-card-action')) {
+              e.stopPropagation();
+              const btn = e.target.closest('.btn-card-action');
+              const act = btn.getAttribute('data-action');
+              const targetP = btn.getAttribute('data-path');
+              if (act === 'folder') {
+                window.electronAPI.openFolder(targetP);
+              } else if (act === 'editor') {
+                showToast('กำลังเปิดใน Code Editor...', 'info', 1500);
+                window.electronAPI.openEditor(targetP);
+              }
+              return;
+            }
             if (p.path === cfg.activePath) {
               closeProjectsHub();
               return;
@@ -2199,6 +2216,30 @@
 
           hubProjectList.appendChild(item);
         });
+      }
+
+      // 1-Click Open Folder and Open Editor from Header
+      const btnOpenFolder = document.getElementById('btn-open-folder');
+      const btnOpenEditor = document.getElementById('btn-open-editor');
+      if (btnOpenFolder) {
+        btnOpenFolder.onclick = async () => {
+          const cfg = await window.electronAPI.getProjects();
+          if (cfg.activePath) {
+            window.electronAPI.openFolder(cfg.activePath);
+          }
+        };
+      }
+      if (btnOpenEditor) {
+        btnOpenEditor.onclick = async () => {
+          const cfg = await window.electronAPI.getProjects();
+          if (cfg.activePath) {
+            showToast('กำลังเปิดใน Code Editor...', 'info', 2000);
+            const res = await window.electronAPI.openEditor(cfg.activePath);
+            if (res.ok) {
+              showToast(`เปิดด้วย ${res.app} สำเร็จ! ✨`, 'success', 2500);
+            }
+          }
+        };
       }
 
       hubAddBtn.onclick = async () => {
