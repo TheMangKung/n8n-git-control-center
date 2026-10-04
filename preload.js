@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRemoteInfo: () => ipcRenderer.invoke('git:getRemoteInfo'),
   saveCheckpoint: (message) => ipcRenderer.invoke('git:saveCheckpoint', message),
   syncOverwrite: () => ipcRenderer.invoke('git:syncOverwrite'),
+  checkCloudUpdates: () => ipcRenderer.invoke('git:checkCloudUpdates'),
   rollback: (commitHash) => ipcRenderer.invoke('git:rollback', commitHash),
   refreshDag: () => ipcRenderer.invoke('git:refreshDag'),
   publishToGitHub: (isPrivate) => ipcRenderer.invoke('git:publishToGitHub', isPrivate),

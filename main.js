@@ -372,11 +372,42 @@ ipcMain.handle('git:getRemoteInfo', async () => {
   };
 });
 
-ipcMain.handle('git:refreshDag', async () => {
+ipcMain.handle('git:checkCloudUpdates', async () => {
   const cfg = loadConfig();
-  if (!cfg.activePath) return { ok: false, error: 'No active repo' };
-  const res = await runGenerateDag(cfg.activePath);
-  return res;
+  const repo = cfg.activePath;
+  if (!repo || !fs.existsSync(repo)) return { ok: false, error: 'No active repository' };
+
+  const remoteRes = await runGit(['remote'], repo);
+  if (!remoteRes.stdout.includes('origin')) {
+    return { ok: false, hasRemote: false };
+  }
+
+  const branchRes = await runGit(['branch', '--show-current'], repo);
+  const branch = branchRes.stdout || 'main';
+
+  // Fetch in background without blocking
+  const fetchRes = await runGit(['fetch', 'origin', branch], repo);
+  if (!fetchRes.ok) {
+    return { ok: false, error: fetchRes.error };
+  }
+
+  // Check rev-list behind count
+  const countRes = await runGit(['rev-list', '--count', `HEAD..origin/${branch}`], repo);
+  const behindCount = parseInt(countRes.stdout, 10) || 0;
+
+  if (behindCount > 0) {
+    // Get latest remote commit info
+    const lastCommitRes = await runGit(['log', '-1', '--format=%s (%cr)', `origin/${branch}`], repo);
+    return {
+      ok: true,
+      hasUpdates: true,
+      behindCount,
+      branch,
+      lastCommitInfo: lastCommitRes.stdout || ''
+    };
+  }
+
+  return { ok: true, hasUpdates: false, behindCount: 0, branch };
 });
 
 ipcMain.handle('git:saveCheckpoint', async (_event, userMessage) => {

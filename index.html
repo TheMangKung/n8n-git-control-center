@@ -356,6 +356,35 @@
       color: #38bdf8;
     }
 
+    /* Cloud Update Alert Banner (Smooth Floating Handshake) */
+    .cloud-update-banner {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.96) 100%);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 10px 18px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 9998;
+      animation: bannerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes bannerSlideDown {
+      from { opacity: 0; transform: translateX(-50%) translateY(-15px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .cloud-icon-pulse {
+      font-size: 20px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -614,16 +643,17 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
       cursor: pointer;
       pointer-events: auto;
-      transition: transform 0.15s, border-color 0.15s;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s;
       box-sizing: border-box;
       overflow: hidden;
+      will-change: transform;
     }
 
     .n8n-node:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px) scale(1.01);
       background: #20242e;
       border-color: #4c566a;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
     }
 
     .n8n-node.selected {
@@ -1356,6 +1386,21 @@
         <button class="btn" id="hub-add-btn" style="font-size:12px;">+ เพิ่มโปรเจกต์ใหม่ (Auto Protect .gitignore)</button>
         <button class="btn btn-primary" id="hub-done-btn">เสร็จสิ้น</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Cloud Update Floating Alert (Zero Friction 2-Machine Handshake) -->
+  <div class="cloud-update-banner" id="cloud-update-banner" style="display:none;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="cloud-icon-pulse">☁️</div>
+      <div>
+        <div style="font-weight:700; font-size:13px; color:#f8fafc;" id="cloud-banner-title">พบจุดเซฟใหม่จาก GitHub!</div>
+        <div style="font-size:11.5px; color:#94a3b8;" id="cloud-banner-subtitle">มีโค้ดใหม่ที่ทำจากอีกเครื่องหนึ่ง รอให้คุณซิงค์</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button class="btn btn-sync" id="btn-cloud-pull-now" style="height:28px; padding:0 12px; font-size:12px;">📥 ซิงค์ลงเครื่องนี้ทันที</button>
+      <button class="drawer-close" id="btn-cloud-dismiss" style="width:24px; height:24px; font-size:12px;">✕</button>
     </div>
   </div>
 
@@ -2356,7 +2401,40 @@
         }
       };
 
-      loadProjects();
+      // Cloud Update Alert Logic (Automatic 2-Machine Handshake)
+      const cloudBanner = document.getElementById('cloud-update-banner');
+      const cloudTitle = document.getElementById('cloud-banner-title');
+      const cloudSubtitle = document.getElementById('cloud-banner-subtitle');
+      const btnCloudPullNow = document.getElementById('btn-cloud-pull-now');
+      const btnCloudDismiss = document.getElementById('btn-cloud-dismiss');
+
+      btnCloudDismiss.onclick = () => {
+        cloudBanner.style.display = 'none';
+      };
+
+      btnCloudPullNow.onclick = async () => {
+        cloudBanner.style.display = 'none';
+        btnSyncOverwrite.click();
+      };
+
+      async function checkForCloudUpdatesQuietly() {
+        try {
+          const res = await window.electronAPI.checkCloudUpdates();
+          if (res.ok && res.hasUpdates && res.behindCount > 0) {
+            cloudTitle.textContent = `พบ ${res.behindCount} จุดเซฟใหม่บน GitHub! ☁️`;
+            cloudSubtitle.textContent = res.lastCommitInfo ? `ล่าสุด: ${res.lastCommitInfo}` : `มีงานใหม่ที่ทำจากอีกเครื่องหนึ่ง`;
+            cloudBanner.style.display = 'flex';
+          } else {
+            cloudBanner.style.display = 'none';
+          }
+        } catch (err) {
+          // Silent ignore background check errors
+        }
+      }
+
+      await loadProjects();
+      // Auto check cloud updates 1.5s after load
+      setTimeout(checkForCloudUpdatesQuietly, 1500);
     } else {
       // Fallback Standalone Zero-Server Browser Mode
       btnRefresh.onclick = () => {
